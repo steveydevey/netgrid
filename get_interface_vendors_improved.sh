@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# Improved script to get vendor information for network interfaces
+# Uses macvendors.com API with rate limiting and better error handling
+
+echo "Network Interface Vendor Lookup (Improved)"
+echo "=========================================="
+
+# Create output file
+output_file="interface_table_with_vendors.txt"
+
+# Clear the output file
+> "$output_file"
+
+# Add header to output file
+cat << 'EOF' > "$output_file"
+Network Interface Summary with Vendor Information
+==================================================
+
+| Interface | Link State        | IP Address         | Media Type        | Vendor            |
+|-----------|-------------------|--------------------|-------------------|-------------------|
+EOF
+
+# Function to get vendor from MAC address with rate limiting
+get_vendor() {
+    local mac="$1"
+    local vendor
+    
+    # Add delay to avoid rate limiting (1 second between requests)
+    sleep 1
+    
+    # Query macvendors.com API
+    vendor=$(curl -s "https://api.macvendors.com/$mac" 2>/dev/null)
+    
+    if [ $? -eq 0 ] && [ -n "$vendor" ]; then
+        # Check if response contains error message
+        if echo "$vendor" | grep -q "errors"; then
+            echo "Rate Limited"
+        else
+            echo "$vendor"
+        fi
+    else
+        echo "Unknown"
+    fi
+}
+
+# Function to get vendor from alternative source (local lookup for common vendors)
+get_vendor_local() {
+    local mac="$1"
+    local oui=$(echo "$mac" | cut -d: -f1-3 | tr '[:lower:]' '[:upper:]')
+    
+    # Common OUI database (partial)
+    case "$oui" in
+        "C4:34:6B")
+            echo "Hewlett Packard"
+            ;;
+        "A0:36:9F")
+            echo "Intel Corporation"
+            ;;
+        "40:A8:F0")
+            echo "Hewlett Packard"
+            ;;
+        "26:5E:E1")
+            echo "Docker Inc"
+            ;;
+        "2A:58:2D")
+            echo "Virtual Interface"
+            ;;
+        *)
+            echo "Unknown"
+            ;;
+    esac
+}
+
+# Get interface information and process each one
+ip addr show | grep -E "^[0-9]+: [a-zA-Z0-9]+:" | while read -r line; do
+    # Extract interface name
+    interface=$(echo "$line" | awk -F': ' '{print $2}' | awk '{print $1}')
+    
+    # Skip loopback interface
+    if [ "$interface" = "lo" ]; then
+        continue
+    fi
+    
+    echo "Processing interface: $interface"
+    
+    # Get MAC address for this interface
+    mac=$(ip link show "$interface" | grep -o -E "link/ether [0-9a-f:]+" | awk '{print $2}')
+    
+    if [ -n "$mac" ]; then
+        echo "  MAC Address: $mac"
+        
+        # Try local lookup first, then API if needed
+        vendor=$(get_vendor_local "$mac")
+        if [ "$vendor" = "Unknown" ]; then
+            echo "  Trying API lookup..."
+            vendor=$(get_vendor "$mac")
+        fi
+        
+        echo "  Vendor: $vendor"
+        
+        # Get link state
+        link_state=$(ip link show "$interface" | grep -o "state [A-Z]\+" | awk '{print $2}')
+        
+        # Get IP address
+        ip_addr=$(ip addr show "$interface" | grep -E "inet [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | awk '{print $2}' | head -1)
+        if [ -z "$ip_addr" ]; then
+            ip_addr="N/A"
+        fi
+        
+        # Determine media type based on interface name
+        if [[ "$interface" =~ ^ens ]]; then
+            media_type="Fiber"
+        else
+            media_type="Ethernet (Copper)"
+        fi
+        
+        # Format link state for display
+        if [ "$link_state" = "UP" ]; then
+            # Check if interface has carrier
+            if ip link show "$interface" | grep -q "LOWER_UP"; then
+                display_state="UP"
+            else
+                display_state="DOWN (No Carrier)"
+            fi
+        else
+            display_state="DOWN"
+        fi
+        
+        # Add to output file
+        printf "| %-9s | %-16s | %-18s | %-18s | %-18s |\n" \
+               "$interface" "$display_state" "$ip_addr" "$media_type" "$vendor" >> "$output_file"
+        
+        echo "  Added to table"
+    else
+        echo "  No MAC address found"
+    fi
+    
+    echo ""
+done
+
+echo "Vendor lookup complete! Results saved to: $output_file"
+echo ""
+echo "Updated table:"
+echo "=============="
+cat "$output_file" 

@@ -1,0 +1,308 @@
+Processing interface: eno1
+==========================================
+netlink error: Operation not permitted
+Settings for eno1:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Supported pause frame use: No
+	Supports auto-negotiation: Yes
+	Supported FEC modes: Not reported
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Advertised FEC modes: Not reported
+	Link partner advertised link modes:  10baseT/Half 10baseT/Full
+	                                     100baseT/Half 100baseT/Full
+	                                     1000baseT/Full
+	Link partner advertised pause frame use: Symmetric
+	Link partner advertised auto-negotiation: Yes
+	Link partner advertised FEC modes: Not reported
+	Speed: 1000Mb/s
+	Duplex: Full
+	Auto-negotiation: on
+	Port: Twisted Pair
+	PHYAD: 1
+	Transceiver: internal
+	MDI-X: off
+        Current message level: 0x000000ff (255)
+                               drv probe link timer ifdown ifup rx_err tx_err
+	Link detected: yes
+
+------------------------------------------
+
+Processing interface: eno2
+==========================================
+netlink error: Operation not permitted
+Settings for eno2:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Supported pause frame use: No
+	Supports auto-negotiation: Yes
+	Supported FEC modes: Not reported
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Advertised FEC modes: Not reported
+	Link partner advertised link modes:  10baseT/Half 10baseT/Full
+	                                     100baseT/Half 100baseT/Full
+	                                     1000baseT/Full
+	Link partner advertised pause frame use: Symmetric
+	Link partner advertised auto-negotiation: Yes
+	Link partner advertised FEC modes: Not reported
+	Speed: 1000Mb/s
+	Duplex: Full
+	Auto-negotiation: on
+	Port: Twisted Pair
+	PHYAD: 2
+	Transceiver: internal
+	MDI-X: off
+        Current message level: 0x000000ff (255)
+                               drv probe link timer ifdown ifup rx_err tx_err
+	Link detected: yes
+
+------------------------------------------
+
+Processing interface: eno3
+==========================================
+netlink error: Operation not permitted
+Settings for eno3:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Supported pause frame use: No
+	Supports auto-negotiation: Yes
+	Supported FEC modes: Not reported
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Advertised FEC modes: Not reported
+	Link partner advertised link modes:  10baseT/Half 10baseT/Full
+	                                     100baseT/Half 100baseT/Full
+	                                     1000baseT/Full
+	Link partner advertised pause frame use: Symmetric
+	Link partner advertised auto-negotiation: Yes
+	Link partner advertised FEC modes: Not reported
+	Speed: 1000Mb/s
+	Duplex: Full
+	Auto-negotiation: on
+	Port: Twisted Pair
+	PHYAD: 3
+	Transceiver: internal
+	MDI-X: on
+        Current message level: 0x000000ff (255)
+                               drv probe link timer ifdown ifup rx_err tx_err
+	Link detected: yes
+
+------------------------------------------
+
+Processing interface: eno4
+==========================================
+netlink error: Operation not permitted
+Settings for eno4:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Supported pause frame use: No
+	Supports auto-negotiation: Yes
+	Supported FEC modes: Not reported
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Advertised FEC modes: Not reported
+	Speed: Unknown!
+	Duplex: Unknown! (255)
+	Auto-negotiation: on
+	Port: Twisted Pair
+	PHYAD: 4
+	Transceiver: internal
+	MDI-X: Unknown
+        Current message level: 0x000000ff (255)
+                               drv probe link timer ifdown ifup rx_err tx_err
+	Link detected: no
+
+------------------------------------------
+
+Processing interface: eno49
+==========================================
+netlink error: Operation not permitted
+Settings for eno49:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Supported pause frame use: No
+	Supports auto-negotiation: Yes
+	Supported FEC modes: Not reported
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Advertised FEC modes: Not reported
+	Speed: Unknown!
+	Duplex: Unknown! (255)
+	Auto-negotiation: on
+	Port: Twisted Pair
+	PHYAD: 1
+	Transceiver: internal
+	MDI-X: Unknown
+        Current message level: 0x000000ff (255)
+                               drv probe link timer ifdown ifup rx_err tx_err
+	Link detected: no
+
+------------------------------------------
+
+Processing interface: eno50
+==========================================
+netlink error: Operation not permitted
+Settings for eno50:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Supported pause frame use: No
+	Supports auto-negotiation: Yes
+	Supported FEC modes: Not reported
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Advertised FEC modes: Not reported
+	Speed: Unknown!
+	Duplex: Unknown! (255)
+	Auto-negotiation: on
+	Port: Twisted Pair
+	PHYAD: 2
+	Transceiver: internal
+	MDI-X: Unknown
+        Current message level: 0x000000ff (255)
+                               drv probe link timer ifdown ifup rx_err tx_err
+	Link detected: no
+
+------------------------------------------
+
+Processing interface: eno51
+==========================================
+netlink error: Operation not permitted
+Settings for eno51:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Supported pause frame use: No
+	Supports auto-negotiation: Yes
+	Supported FEC modes: Not reported
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Advertised FEC modes: Not reported
+	Speed: Unknown!
+	Duplex: Unknown! (255)
+	Auto-negotiation: on
+	Port: Twisted Pair
+	PHYAD: 3
+	Transceiver: internal
+	MDI-X: Unknown
+        Current message level: 0x000000ff (255)
+                               drv probe link timer ifdown ifup rx_err tx_err
+	Link detected: no
+
+------------------------------------------
+
+Processing interface: eno52
+==========================================
+netlink error: Operation not permitted
+Settings for eno52:
+	Supported ports: [ TP ]
+	Supported link modes:   10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Supported pause frame use: No
+	Supports auto-negotiation: Yes
+	Supported FEC modes: Not reported
+	Advertised link modes:  10baseT/Half 10baseT/Full
+	                        100baseT/Half 100baseT/Full
+	                        1000baseT/Half 1000baseT/Full
+	Advertised pause frame use: No
+	Advertised auto-negotiation: Yes
+	Advertised FEC modes: Not reported
+	Speed: Unknown!
+	Duplex: Unknown! (255)
+	Auto-negotiation: on
+	Port: Twisted Pair
+	PHYAD: 4
+	Transceiver: internal
+	MDI-X: Unknown
+        Current message level: 0x000000ff (255)
+                               drv probe link timer ifdown ifup rx_err tx_err
+	Link detected: no
+
+------------------------------------------
+
+Processing interface: ens1f0
+==========================================
+netlink error: Operation not permitted
+Settings for ens1f0:
+	Supported ports: [ FIBRE ]
+	Supported link modes:   10000baseT/Full
+	Supported pause frame use: Symmetric
+	Supports auto-negotiation: No
+	Supported FEC modes: Not reported
+	Advertised link modes:  10000baseT/Full
+	Advertised pause frame use: Symmetric
+	Advertised auto-negotiation: No
+	Advertised FEC modes: Not reported
+	Speed: 10000Mb/s
+	Duplex: Full
+	Auto-negotiation: off
+	Port: FIBRE
+	PHYAD: 0
+	Transceiver: internal
+        Current message level: 0x00000007 (7)
+                               drv probe link
+	Link detected: yes
+
+------------------------------------------
+
+Processing interface: ens1f1
+==========================================
+netlink error: Operation not permitted
+Settings for ens1f1:
+	Supported ports: [ FIBRE ]
+	Supported link modes:   10000baseT/Full
+	Supported pause frame use: Symmetric
+	Supports auto-negotiation: No
+	Supported FEC modes: Not reported
+	Advertised link modes:  10000baseT/Full
+	Advertised pause frame use: Symmetric
+	Advertised auto-negotiation: No
+	Advertised FEC modes: Not reported
+	Speed: 10000Mb/s
+	Duplex: Full
+	Auto-negotiation: off
+	Port: FIBRE
+	PHYAD: 0
+	Transceiver: internal
+        Current message level: 0x00000007 (7)
+                               drv probe link
+	Link detected: yes
+
+------------------------------------------
+

@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+stage changes and create commits with a summary of the work done, for each block of work done on each feature. 

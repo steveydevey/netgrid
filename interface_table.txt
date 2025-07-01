@@ -1,0 +1,15 @@
+Network Interface Summary
+==================================================
+
+| Interface | Link State        | IP Address         | Media Type        |
+|-----------|-------------------|--------------------|-------------------|
+| eno1      | UP                | 192.168.254.77/24  | Ethernet (Copper) |
+| eno2      | UP                | N/A                | Ethernet (Copper) |
+| eno3      | UP                | N/A                | Ethernet (Copper) |
+| eno4      | DOWN (No Carrier) | N/A                | Ethernet (Copper) |
+| eno49     | DOWN (No Carrier) | N/A                | Ethernet (Copper) |
+| eno50     | DOWN (No Carrier) | N/A                | Ethernet (Copper) |
+| eno51     | DOWN (No Carrier) | N/A                | Ethernet (Copper) |
+| eno52     | DOWN (No Carrier) | N/A                | Ethernet (Copper) |
+| ens1f0    | UP                | 192.168.254.132/24 | Fiber             |
+| ens1f1    | UP                | N/A                | Fiber             |

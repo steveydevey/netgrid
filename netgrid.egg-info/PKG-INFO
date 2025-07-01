@@ -1,0 +1,186 @@
+Metadata-Version: 2.4
+Name: netgrid
+Version: 0.1.0
+Summary: Network Interface Information Tool
+Home-page: https://github.com/yourusername/netgrid
+Author: NetGrid Team
+Author-email: 
+Project-URL: Bug Reports, https://github.com/yourusername/netgrid/issues
+Project-URL: Source, https://github.com/yourusername/netgrid
+Project-URL: Documentation, https://netgrid.readthedocs.io/
+Keywords: network,interfaces,monitoring,cli,linux
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: System :: Networking :: Monitoring
+Classifier: Topic :: Utilities
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: psutil>=5.8.0
+Requires-Dist: netifaces>=0.11.0
+Requires-Dist: requests>=2.25.0
+Requires-Dist: rich>=12.0.0
+Requires-Dist: click>=8.0.0
+Requires-Dist: pytest>=6.0.0
+Requires-Dist: pytest-cov>=2.12.0
+Requires-Dist: black>=21.0.0
+Requires-Dist: flake8>=3.9.0
+Requires-Dist: mypy>=0.910
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=2.12.0; extra == "dev"
+Requires-Dist: black>=21.0.0; extra == "dev"
+Requires-Dist: flake8>=3.9.0; extra == "dev"
+Requires-Dist: mypy>=0.910; extra == "dev"
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# NetGrid
+
+A command line tool to provide users with a visual table of information about network interfaces attached to the system, including link state, IP address(es), MAC address, vendor information, and more.
+
+## Features
+
+- **Comprehensive Interface Information**: Display link state, IP addresses, MAC addresses, MTU, driver info, and more
+- **Vendor Lookup**: Automatic vendor identification via OUI lookup with local caching
+- **Beautiful Output**: Rich, color-coded tables with proper formatting
+- **Flexible Filtering**: Filter interfaces by type, status, or custom criteria
+- **Future-Ready**: Architecture designed to support real-time ncurses-style updates
+
+## Quick Start
+
+### Installation
+
+```bash
+# Install from source
+git clone https://github.com/yourusername/netgrid.git
+cd netgrid
+pip install -e .
+
+# Or install dependencies directly
+pip install -r requirements.txt
+```
+
+### Basic Usage
+
+```bash
+# Display all network interfaces
+netgrid
+
+# Show specific interface details
+netgrid --interface eth0
+
+# Filter interfaces by type
+netgrid --filter physical
+
+# Disable color output
+netgrid --no-color
+```
+
+## Project Structure
+
+```
+netgrid/
+├── src/                    # Source code
+│   ├── core/              # Core business logic
+│   ├── display/           # Output formatting
+│   ├── utils/             # Utility functions
+│   └── cli/               # Command line interface
+├── docs/                  # Documentation
+├── tests/                 # Test suite
+├── plans/                 # Project planning documents
+└── requirements.txt       # Python dependencies
+```
+
+## Development
+
+### Setup Development Environment
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/netgrid.git
+cd netgrid
+
+# Install in development mode
+pip install -e .[dev]
+
+# Run tests
+pytest
+
+# Format code
+black src/ tests/
+
+# Lint code
+flake8 src/ tests/
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=src
+
+# Run specific test file
+pytest tests/test_interface_collector.py
+```
+
+## Documentation
+
+- [Installation Guide](docs/user_guide/installation.md)
+- [Usage Guide](docs/user_guide/usage.md)
+- [Configuration](docs/user_guide/configuration.md)
+- [Examples](docs/user_guide/examples.md)
+- [Troubleshooting](docs/user_guide/troubleshooting.md)
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](docs/developer/contributing.md) for details.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Roadmap
+
+### Phase 1: Basic Command Line Tool ✅
+- [x] Project planning and structure
+- [ ] Network interface discovery
+- [ ] Data collection and formatting
+- [ ] Vendor lookup system
+- [ ] CLI interface
+
+### Phase 2: Real-time Updates (Future)
+- [ ] Ncurses interface
+- [ ] Real-time monitoring
+- [ ] Interactive controls
+- [ ] Performance metrics
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/netgrid/issues)
+- **Documentation**: [Project Docs](docs/)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/netgrid/discussions)
+
+## Acknowledgments
+
+- Built with [Rich](https://github.com/Textualize/rich) for beautiful terminal output
+- Uses [psutil](https://github.com/giampaolo/psutil) for system information
+- Inspired by network monitoring tools like `ip`, `ifconfig`, and `netstat` 

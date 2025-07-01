@@ -1,0 +1,10 @@
+2: eno1: 	<BROADCAST,MULTICAST,UP,LOWER_UP> 	mtu 1500 qdisc mq state UP mode DEFAULT group default qlen 1000\    link/ether c4:34:6b:ba:79:6c brd ff:ff:ff:ff:ff:ff\    altname enp2s0f0
+3: ens1f0: 	<BROADCAST,MULTICAST,UP,LOWER_UP> 	mtu 1500 qdisc mq state UP mode DEFAULT group default qlen 1000\    link/ether a0:36:9f:b3:06:54 brd ff:ff:ff:ff:ff:ff\    altname enp5s0f0
+4: eno2: 	<BROADCAST,MULTICAST,UP,LOWER_UP> 	mtu 1500 qdisc mq state UP mode DEFAULT group default qlen 1000\    link/ether c4:34:6b:ba:79:6d brd ff:ff:ff:ff:ff:ff\    altname enp2s0f1
+5: eno3: 	<BROADCAST,MULTICAST,UP,LOWER_UP> 	mtu 1500 qdisc mq master vmsgohere state UP mode DEFAULT group default qlen 1000\    link/ether c4:34:6b:ba:79:6e brd ff:ff:ff:ff:ff:ff\    altname enp2s0f2
+6: eno4: 	<NO-CARRIER,BROADCAST,MULTICAST,UP> 	mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000\    link/ether c4:34:6b:ba:79:6f brd ff:ff:ff:ff:ff:ff\    altname enp2s0f3
+7: ens1f1: 	<BROADCAST,MULTICAST,UP,LOWER_UP> 	mtu 1500 qdisc mq state UP mode DEFAULT group default qlen 1000\    link/ether a0:36:9f:b3:06:55 brd ff:ff:ff:ff:ff:ff\    altname enp5s0f1
+8: eno49: 	<NO-CARRIER,BROADCAST,MULTICAST,UP> 	mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000\    link/ether 40:a8:f0:34:82:8c brd ff:ff:ff:ff:ff:ff\    altname enp4s0f0
+9: eno50: 	<NO-CARRIER,BROADCAST,MULTICAST,UP> 	mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000\    link/ether 40:a8:f0:34:82:8d brd ff:ff:ff:ff:ff:ff\    altname enp4s0f1
+10: eno51: 	<NO-CARRIER,BROADCAST,MULTICAST,UP> 	mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000\    link/ether 40:a8:f0:34:82:8e brd ff:ff:ff:ff:ff:ff\    altname enp4s0f2
+11: eno52: 	<NO-CARRIER,BROADCAST,MULTICAST,UP> 	mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000\    link/ether 40:a8:f0:34:82:8f brd ff:ff:ff:ff:ff:ff\    altname enp4s0f3

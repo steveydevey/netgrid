@@ -1,0 +1,67 @@
+# NetGrid Project Rules and Context
+
+## Project Overview
+NetGrid is a command line tool for displaying network interface information in a visual table format. The project values simplicity over complexity and modularity over monolith architecture.
+
+## Key Principles
+- Simplicity over complex architecture
+- Modularity over monolith
+- Comprehensive testing and documentation
+- Future-ready for ncurses-style real-time updates
+
+## Project Structure
+```
+netgrid/
+├── src/                    # Source code
+│   ├── core/              # Core business logic (interface_collector, vendor_lookup, data_models)
+│   ├── display/           # Output formatting (table_formatter, color_manager)
+│   ├── utils/             # Utility functions (system_utils, cache_manager)
+│   └── cli/               # Command line interface (main.py)
+├── docs/                  # Documentation (user_guide, developer, technical)
+├── tests/                 # Test suite
+├── plans/                 # Project planning documents
+└── requirements.txt       # Python dependencies
+```
+
+## Technology Stack
+- Python 3.8+
+- psutil - System and process utilities
+- netifaces - Network interface information
+- requests - HTTP requests for OUI lookup
+- rich - Rich text and table formatting
+- click - Command line interface creation
+
+## Development Guidelines
+- Use Python 3.8+ features and type hints
+- Follow PEP 8 style guidelines
+- Write comprehensive tests for each module
+- Document all public APIs with docstrings
+- Use modular architecture with clear separation of concerns
+
+## Current Phase
+Phase 1: Basic Command Line Tool
+- [x] Project planning and structure setup
+- [ ] Network interface discovery and data collection
+- [ ] Vendor lookup system with caching
+- [ ] Table formatting and display
+- [ ] CLI interface implementation
+
+## Future Considerations
+- Phase 2 will include ncurses-style real-time updates
+- Architecture should support real-time monitoring
+- Consider performance for large numbers of interfaces
+- Plan for cross-platform compatibility
+
+## Important Files
+- `plans/project_overview.md` - Comprehensive project plan
+- `plans/source_structure.md` - Detailed source code architecture
+- `plans/documentation_plan.md` - Documentation strategy
+- `requirements.txt` - Python dependencies
+- `setup.py` - Package configuration
+
+## Development Commands
+- `pip install -e .[dev]` - Install in development mode
+- `pytest` - Run tests
+- `black src/ tests/` - Format code
+- `flake8 src/ tests/` - Lint code
+- `mypy src/` - Type checking 

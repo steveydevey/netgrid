@@ -1,0 +1,17 @@
+Network Interface Summary with Vendor Information
+==================================================
+
+| Interface | Link State       | IP Address         | Media Type        | Vendor             |
+|-----------|------------------|--------------------|-------------------|--------------------|
+| eno1      | UP               | 192.168.254.77/24  | Ethernet (Copper) | Hewlett Packard    |
+| ens1f0    | UP               | 192.168.254.132/24 | Fiber             | Intel Corporation  |
+| eno2      | UP               | N/A                | Ethernet (Copper) | Hewlett Packard    |
+| eno3      | UP               | N/A                | Ethernet (Copper) | Hewlett Packard    |
+| eno4      | DOWN             | N/A                | Ethernet (Copper) | Hewlett Packard    |
+| ens1f1    | UP               | N/A                | Fiber             | Intel Corporation  |
+| eno49     | DOWN             | N/A                | Ethernet (Copper) | Hewlett Packard    |
+| eno50     | DOWN             | N/A                | Ethernet (Copper) | Hewlett Packard    |
+| eno51     | DOWN             | N/A                | Ethernet (Copper) | Hewlett Packard    |
+| eno52     | DOWN             | N/A                | Ethernet (Copper) | Hewlett Packard    |
+| vmsgohere | UP               | N/A                | Ethernet (Copper) | Virtual Interface  |
+| docker0   | UP               | 172.17.0.1/16      | Ethernet (Copper) | Docker Inc         |
