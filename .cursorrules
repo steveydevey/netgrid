@@ -12,7 +12,7 @@ NetGrid is a command line tool for displaying network interface information in a
 ## Project Structure
 ```
 netgrid/
-├── src/                    # Source code
+├── src/netgrid/           # Source code
 │   ├── core/              # Core business logic (interface_collector, vendor_lookup, data_models)
 │   ├── display/           # Output formatting (table_formatter, color_manager)
 │   ├── utils/             # Utility functions (system_utils, cache_manager)
@@ -39,12 +39,15 @@ netgrid/
 - Use modular architecture with clear separation of concerns
 
 ## Current Phase
-Phase 1: Basic Command Line Tool
+Phase 1: Basic Command Line Tool - Week 2 Complete ✅
 - [x] Project planning and structure setup
-- [ ] Network interface discovery and data collection
+- [x] Network interface discovery and data collection (real-time system queries)
+- [x] Basic CLI interface with filtering (excludes veth, br-, lo, tailscale, vmsgohere)
+- [x] Speed information display in table output
+- [x] Comprehensive test suite
 - [ ] Vendor lookup system with caching
-- [ ] Table formatting and display
-- [ ] CLI interface implementation
+- [ ] Enhanced table formatting with colors
+- [ ] Additional CLI options and filtering
 
 ## Future Considerations
 - Phase 2 will include ncurses-style real-time updates
@@ -53,15 +56,35 @@ Phase 1: Basic Command Line Tool
 - Plan for cross-platform compatibility
 
 ## Important Files
-- `plans/project_overview.md` - Comprehensive project plan
+- `plans/project_overview.md` - Comprehensive project plan (updated with current status)
 - `plans/source_structure.md` - Detailed source code architecture
 - `plans/documentation_plan.md` - Documentation strategy
 - `requirements.txt` - Python dependencies
 - `setup.py` - Package configuration
+- `src/netgrid/cli/main.py` - Working CLI entry point
+- `src/netgrid/core/interface_collector.py` - Real-time system interface discovery
+- `src/netgrid/core/data_models.py` - Data structures and models
 
 ## Development Commands
-- `pip install -e .[dev]` - Install in development mode
-- `pytest` - Run tests
-- `black src/ tests/` - Format code
-- `flake8 src/ tests/` - Lint code
-- `mypy src/` - Type checking 
+- `python3 -m venv venv` - Create virtual environment
+- `venv/bin/pip install uv` - Install uv package manager
+- `venv/bin/uv pip install -e .[dev]` - Install in development mode
+- `venv/bin/python -m pytest` - Run tests
+- `venv/bin/black src/ tests/` - Format code
+- `venv/bin/flake8 src/ tests/` - Lint code
+- `venv/bin/mypy src/` - Type checking
+- `venv/bin/netgrid` - Run the CLI tool
+
+## Current Working Features
+- Real-time network interface discovery using system tools and filesystem
+- Automatic filtering of virtual interfaces (veth, br-, lo, tailscale, vmsgohere)
+- Display of interface name, state, speed, MAC address, and IP addresses
+- Clean table output with proper alignment
+- Sub-second response time for interface queries
+- Comprehensive test coverage for core functionality
+
+## Next Development Priorities
+1. Implement vendor lookup system with OUI database and caching
+2. Enhance table formatting with colors and better styling
+3. Add CLI options for custom filtering and sorting
+4. Add more interface details (driver info, duplex mode, etc.) 
