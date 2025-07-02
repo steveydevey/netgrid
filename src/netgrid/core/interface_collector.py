@@ -19,6 +19,7 @@ from .data_models import (
     LinkState,
     DuplexMode,
 )
+from .vendor_lookup import VendorLookup
 
 
 class InterfaceCollector:
@@ -30,9 +31,22 @@ class InterfaceCollector:
     filesystem access.
     """
     
-    def __init__(self):
-        """Initialize the interface collector."""
+    def __init__(self, enable_vendor_lookup: bool = True):
+        """
+        Initialize the interface collector.
+        
+        Args:
+            enable_vendor_lookup: Whether to enable vendor lookup for MAC addresses
+        """
         self._interfaces_cache: Optional[InterfaceCollection] = None
+        self._vendor_lookup: Optional[VendorLookup] = None
+        
+        if enable_vendor_lookup:
+            try:
+                self._vendor_lookup = VendorLookup()
+            except Exception as e:
+                print(f"Warning: Vendor lookup disabled due to error: {e}")
+                self._vendor_lookup = None
     
     def get_all_interfaces(self) -> InterfaceCollection:
         """
@@ -89,7 +103,47 @@ class InterfaceCollector:
                 # Log error but continue with other interfaces
                 print(f"Warning: Failed to collect info for interface {name}: {e}")
         
+        # Populate vendor information in bulk if enabled
+        if self._vendor_lookup:
+            self._populate_vendors(collection)
+        
         return collection
+    
+    def _populate_vendors(self, collection: InterfaceCollection) -> None:
+        """
+        Populate vendor information for all interfaces in bulk.
+        
+        Args:
+            collection: InterfaceCollection to populate vendors for
+        """
+        if not self._vendor_lookup:
+            return
+        
+        # Collect MAC addresses only from physical interfaces
+        mac_addresses = []
+        physical_interfaces = []
+        for interface in collection.interfaces:
+            if (interface.mac_address and 
+                interface.interface_type == InterfaceType.PHYSICAL and
+                not interface.name.startswith(('veth', 'br-', 'docker', 'virbr'))):
+                mac_addresses.append(interface.mac_address)
+                physical_interfaces.append(interface)
+        
+        if not mac_addresses:
+            return
+        
+        try:
+            print(f"Looking up vendors for {len(mac_addresses)} physical interfaces...")
+            # Perform bulk lookup
+            vendor_results = self._vendor_lookup.bulk_lookup(mac_addresses)
+            
+            # Update interfaces with vendor information
+            for interface in physical_interfaces:
+                if interface.mac_address and interface.mac_address in vendor_results:
+                    interface.vendor = vendor_results[interface.mac_address]
+                    
+        except Exception as e:
+            print(f"Warning: Failed to populate vendors: {e}")
     
     def _get_interface_names(self) -> List[str]:
         """
@@ -133,6 +187,9 @@ class InterfaceCollector:
         description = self._get_description(interface_name)
         flags = self._get_flags(interface_name)
         
+        # Vendor information (if enabled) - will be populated later in bulk
+        vendor = None
+        
         # Additional metadata
         extra_data = self._get_extra_data(interface_name)
         
@@ -146,6 +203,7 @@ class InterfaceCollector:
             mtu=mtu,
             driver=driver,
             interface_type=interface_type,
+            vendor=vendor,
             description=description,
             flags=flags,
             extra_data=extra_data

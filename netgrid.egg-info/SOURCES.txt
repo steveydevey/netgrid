@@ -9,7 +9,13 @@ netgrid.egg-info/requires.txt
 netgrid.egg-info/top_level.txt
 src/netgrid/__init__.py
 src/netgrid/cli/__init__.py
+src/netgrid/cli/main.py
 src/netgrid/core/__init__.py
 src/netgrid/core/data_models.py
+src/netgrid/core/interface_collector.py
+src/netgrid/core/vendor_lookup.py
 src/netgrid/display/__init__.py
+src/netgrid/display/color_manager.py
+src/netgrid/display/table_formatter.py
 src/netgrid/utils/__init__.py
+src/netgrid/utils/cache_manager.py

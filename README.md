@@ -5,9 +5,11 @@ A command line tool to provide users with a visual table of information about ne
 ## Features
 
 - **Real-time Interface Discovery**: Live system queries using `/sys`, `/proc`, and system tools
-- **Comprehensive Interface Information**: Display link state, IP addresses, MAC addresses, speed, MTU, driver info, and more
+- **Comprehensive Interface Information**: Display link state, IP addresses, MAC addresses, speed, MTU, driver info, vendor (with OUI lookup and caching), and more
 - **Smart Filtering**: Automatically filters out virtual interfaces (veth, br-, lo, tailscale, etc.)
-- **Beautiful Output**: Clean, readable table format with proper alignment
+- **Beautiful Output**: Clean, readable table format with proper alignment and color
+- **Vendor Lookup with Caching**: MAC address vendor information is fetched using public OUI APIs and cached locally for performance and offline use
+- **Customizable Output**: Options for color scheme, summary, and disabling vendor lookups
 - **Future-Ready**: Architecture designed to support real-time ncurses-style updates
 
 ## Quick Start
@@ -35,21 +37,38 @@ netgrid
 # The tool automatically:
 # - Collects real-time data from the system
 # - Filters out virtual interfaces (veth, br-, lo, tailscale, etc.)
-# - Shows interface name, state, speed, MAC, and IP addresses
+# - Shows interface name, state, speed, MAC, vendor, and IP addresses
 ```
 
 ### Example Output
 
 ```
-Name            State    Speed      MAC                  IP Addresses
----------------------------------------------------------------------
-eno1            up       1Gbps      C4:34:6B:BA:79:6C    192.168.254.77, fe80::c634:6bff:feba:796c
-eno2            up       1Gbps      C4:34:6B:BA:79:6D    fe80::c634:6bff:feba:796d
-ens1f0          up       10Gbps     A0:36:9F:B3:06:54    192.168.254.132, fe80::a236:9fff:feb3:654
-ens1f1          up       10Gbps     A0:36:9F:B3:06:55    fe80::a236:9fff:feb3:655
-eno3            up       1Gbps      C4:34:6B:BA:79:6E    -
-eno4            down     -          C4:34:6B:BA:79:6F    -
+Name            State    Speed      MAC                  Vendor           IP Addresses
+-------------------------------------------------------------------------------
+eno1            up       1Gbps      C4:34:6B:BA:79:6C    Hewlett Packard  192.168.254.77, fe80::c634:6bff:feba:796c
+eno2            up       1Gbps      C4:34:6B:BA:79:6D    Hewlett Packard  fe80::c634:6bff:feba:796d
+ens1f0          up       10Gbps     A0:36:9F:B3:06:54    Intel Corporate  192.168.254.132, fe80::a236:9fff:feb3:654
+ens1f1          up       10Gbps     A0:36:9F:B3:06:55    Intel Corporate  fe80::a236:9fff:feb3:655
+eno3            up       1Gbps      C4:34:6B:BA:79:6E    Hewlett Packard  -
+eno4            down     -          C4:34:6B:BA:79:6F    Hewlett Packard  -
 ```
+
+## Vendor Lookup and Caching
+
+NetGrid uses public OUI APIs to look up the vendor for each MAC address. Results are cached locally in `~/.netgrid/cache` for performance and offline use. If a vendor cannot be found, the field will show `-`.
+
+- To disable vendor lookups (for speed or privacy), use the `--no-vendors` option:
+
+```bash
+netgrid --no-vendors
+```
+
+## Customization and CLI Options
+
+- `--show-ipv6` — Show IPv6 addresses in addition to IPv4
+- `--no-vendors` — Disable vendor lookup (faster, no external requests)
+- `--show-summary` — Show a summary of interface counts and types
+- `--color-scheme` — Choose a color scheme: `default`, `dark`, `light`, `high_contrast`, `colorblind`
 
 ## Project Structure
 
@@ -58,9 +77,13 @@ netgrid/
 ├── src/netgrid/           # Source code
 │   ├── core/              # Core business logic
 │   │   ├── data_models.py           # Data structures and models
-│   │   └── interface_collector.py   # System interface discovery
-│   ├── display/           # Output formatting (future)
-│   ├── utils/             # Utility functions (future)
+│   │   ├── interface_collector.py   # System interface discovery
+│   │   └── vendor_lookup.py         # Vendor lookup and caching
+│   ├── display/           # Output formatting
+│   │   ├── table_formatter.py       # Table formatting and styling
+│   │   └── color_manager.py         # Color schemes and themes
+│   ├── utils/             # Utility functions
+│   │   └── cache_manager.py         # Local cache management
 │   └── cli/               # Command line interface
 │       └── main.py        # CLI entry point
 ├── docs/                  # Documentation
@@ -103,7 +126,7 @@ venv/bin/python -m pytest
 venv/bin/python -m pytest --cov=src
 
 # Run specific test file
-venv/bin/python -m pytest tests/core/test_interface_collector.py -v
+venv/bin/python -m pytest tests/core/test_vendor_lookup.py -v
 ```
 
 ## Documentation
@@ -130,9 +153,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] Real-time system queries (no text files)
 - [x] Basic CLI interface with filtering
 - [x] Speed information display
-- [ ] Vendor lookup system with caching
-- [ ] Enhanced table formatting with colors
-- [ ] Additional CLI options and filtering
+- [x] Vendor lookup system with caching
+- [x] Enhanced table formatting with colors
+- [x] Additional CLI options and filtering
 
 ### Phase 2: Real-time Updates (Future)
 - [ ] Ncurses interface
@@ -142,15 +165,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Current Status
 
-**Phase 1 - Week 2 Complete** ✅
+**Phase 1 - Complete** ✅
 - ✅ Basic CLI tool is functional and displays real-time interface information
 - ✅ System interface discovery and data collection working
 - ✅ Speed information included in table output
 - ✅ Interface filtering implemented (excludes veth, br-, lo, tailscale, vmsgohere)
+- ✅ Vendor lookup and caching implemented
+- ✅ Enhanced table formatting and color options
+- ✅ CLI summary and color scheme options
 - ✅ Comprehensive test suite in place
 - ✅ Project structure and documentation established
 
-**Next Priority**: Implement vendor lookup system and enhance table formatting
+**Next Priority**: Begin Phase 2 (real-time updates)
 
 ## Support
 
@@ -162,4 +188,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Built with [Rich](https://github.com/Textualize/rich) for beautiful terminal output
 - Uses [psutil](https://github.com/giampaolo/psutil) for system information
+- Uses [macvendors.com](https://macvendors.com/) and [macvendors.co](https://macvendors.co/) for OUI lookups
 - Inspired by network monitoring tools like `ip`, `ifconfig`, and `netstat` 

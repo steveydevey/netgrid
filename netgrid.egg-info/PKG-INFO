@@ -52,14 +52,14 @@ Dynamic: summary
 
 # NetGrid
 
-A command line tool to provide users with a visual table of information about network interfaces attached to the system, including link state, IP address(es), MAC address, vendor information, and more.
+A command line tool to provide users with a visual table of information about network interfaces attached to the system, including link state, IP address(es), MAC address, speed, vendor information, and more.
 
 ## Features
 
-- **Comprehensive Interface Information**: Display link state, IP addresses, MAC addresses, MTU, driver info, and more
-- **Vendor Lookup**: Automatic vendor identification via OUI lookup with local caching
-- **Beautiful Output**: Rich, color-coded tables with proper formatting
-- **Flexible Filtering**: Filter interfaces by type, status, or custom criteria
+- **Real-time Interface Discovery**: Live system queries using `/sys`, `/proc`, and system tools
+- **Comprehensive Interface Information**: Display link state, IP addresses, MAC addresses, speed, MTU, driver info, and more
+- **Smart Filtering**: Automatically filters out virtual interfaces (veth, br-, lo, tailscale, etc.)
+- **Beautiful Output**: Clean, readable table format with proper alignment
 - **Future-Ready**: Architecture designed to support real-time ncurses-style updates
 
 ## Quick Start
@@ -70,7 +70,9 @@ A command line tool to provide users with a visual table of information about ne
 # Install from source
 git clone https://github.com/yourusername/netgrid.git
 cd netgrid
-pip install -e .
+python3 -m venv venv
+venv/bin/pip install uv
+venv/bin/uv pip install -e .
 
 # Or install dependencies directly
 pip install -r requirements.txt
@@ -79,28 +81,40 @@ pip install -r requirements.txt
 ### Basic Usage
 
 ```bash
-# Display all network interfaces
+# Display all network interfaces (filtered)
 netgrid
 
-# Show specific interface details
-netgrid --interface eth0
+# The tool automatically:
+# - Collects real-time data from the system
+# - Filters out virtual interfaces (veth, br-, lo, tailscale, etc.)
+# - Shows interface name, state, speed, MAC, and IP addresses
+```
 
-# Filter interfaces by type
-netgrid --filter physical
+### Example Output
 
-# Disable color output
-netgrid --no-color
+```
+Name            State    Speed      MAC                  IP Addresses
+---------------------------------------------------------------------
+eno1            up       1Gbps      C4:34:6B:BA:79:6C    192.168.254.77, fe80::c634:6bff:feba:796c
+eno2            up       1Gbps      C4:34:6B:BA:79:6D    fe80::c634:6bff:feba:796d
+ens1f0          up       10Gbps     A0:36:9F:B3:06:54    192.168.254.132, fe80::a236:9fff:feb3:654
+ens1f1          up       10Gbps     A0:36:9F:B3:06:55    fe80::a236:9fff:feb3:655
+eno3            up       1Gbps      C4:34:6B:BA:79:6E    -
+eno4            down     -          C4:34:6B:BA:79:6F    -
 ```
 
 ## Project Structure
 
 ```
 netgrid/
-├── src/                    # Source code
+├── src/netgrid/           # Source code
 │   ├── core/              # Core business logic
-│   ├── display/           # Output formatting
-│   ├── utils/             # Utility functions
+│   │   ├── data_models.py           # Data structures and models
+│   │   └── interface_collector.py   # System interface discovery
+│   ├── display/           # Output formatting (future)
+│   ├── utils/             # Utility functions (future)
 │   └── cli/               # Command line interface
+│       └── main.py        # CLI entry point
 ├── docs/                  # Documentation
 ├── tests/                 # Test suite
 ├── plans/                 # Project planning documents
@@ -116,30 +130,32 @@ netgrid/
 git clone https://github.com/yourusername/netgrid.git
 cd netgrid
 
-# Install in development mode
-pip install -e .[dev]
+# Create virtual environment and install dependencies
+python3 -m venv venv
+venv/bin/pip install uv
+venv/bin/uv pip install -e .[dev]
 
 # Run tests
-pytest
+venv/bin/python -m pytest
 
 # Format code
-black src/ tests/
+venv/bin/black src/ tests/
 
 # Lint code
-flake8 src/ tests/
+venv/bin/flake8 src/ tests/
 ```
 
 ### Running Tests
 
 ```bash
 # Run all tests
-pytest
+venv/bin/python -m pytest
 
 # Run with coverage
-pytest --cov=src
+venv/bin/python -m pytest --cov=src
 
 # Run specific test file
-pytest tests/test_interface_collector.py
+venv/bin/python -m pytest tests/core/test_interface_collector.py -v
 ```
 
 ## Documentation
@@ -160,18 +176,33 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Roadmap
 
-### Phase 1: Basic Command Line Tool ✅
-- [x] Project planning and structure
-- [ ] Network interface discovery
-- [ ] Data collection and formatting
-- [ ] Vendor lookup system
-- [ ] CLI interface
+### Phase 1: Basic Command Line Tool ✅ (In Progress)
+- [x] Project planning and structure setup
+- [x] Network interface discovery and data collection
+- [x] Real-time system queries (no text files)
+- [x] Basic CLI interface with filtering
+- [x] Speed information display
+- [ ] Vendor lookup system with caching
+- [ ] Enhanced table formatting with colors
+- [ ] Additional CLI options and filtering
 
 ### Phase 2: Real-time Updates (Future)
 - [ ] Ncurses interface
 - [ ] Real-time monitoring
 - [ ] Interactive controls
 - [ ] Performance metrics
+
+## Current Status
+
+**Phase 1 - Week 2 Complete** ✅
+- ✅ Basic CLI tool is functional and displays real-time interface information
+- ✅ System interface discovery and data collection working
+- ✅ Speed information included in table output
+- ✅ Interface filtering implemented (excludes veth, br-, lo, tailscale, vmsgohere)
+- ✅ Comprehensive test suite in place
+- ✅ Project structure and documentation established
+
+**Next Priority**: Implement vendor lookup system and enhance table formatting
 
 ## Support
 
