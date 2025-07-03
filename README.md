@@ -12,33 +12,106 @@ A command line tool to provide users with a visual table of information about ne
 - **Customizable Output**: Options for color scheme, summary, and disabling vendor lookups
 - **Future-Ready**: Architecture designed to support real-time ncurses-style updates
 
-## Quick Start
+## Installation
 
-### Installation
+### Method 1: Install from Source (Recommended)
 
 ```bash
-# Install from source
+# Clone the repository
 git clone https://github.com/yourusername/netgrid.git
 cd netgrid
-python3 -m venv venv
-venv/bin/pip install uv
-venv/bin/uv pip install -e .
 
-# Or install dependencies directly
-pip install -r requirements.txt
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Linux/macOS
+# OR
+venv\Scripts\activate     # On Windows
+
+# Install uv for faster package management
+pip install uv
+
+# Install NetGrid in development mode
+uv pip install -e .
 ```
+
+### Method 2: Quick Install with pip
+
+```bash
+# Create virtual environment (recommended)
+python3 -m venv netgrid-env
+source netgrid-env/bin/activate
+
+# Install dependencies directly
+pip install -r requirements.txt
+
+# Run from source directory
+python -m netgrid.cli.main
+```
+
+### Method 3: System-wide Installation
+
+⚠️ **Warning**: Installing packages system-wide can cause conflicts. Virtual environments are recommended.
+
+```bash
+# Install dependencies system-wide
+sudo pip install psutil netifaces requests rich click
+
+# Clone and run
+git clone https://github.com/yourusername/netgrid.git
+cd netgrid
+python -m netgrid.cli.main
+```
+
+## Requirements
+
+- **Python**: 3.8 or newer
+- **Operating System**: Linux (tested on Ubuntu, CentOS, Amazon Linux)
+- **Privileges**: Some features may require root privileges for full system access
+- **Network**: Internet connection for vendor lookup (optional)
+
+## Quick Start
 
 ### Basic Usage
 
+After installation, you can run NetGrid in several ways:
+
 ```bash
-# Display all network interfaces (filtered)
+# If installed with setup.py (Method 1)
 netgrid
 
-# The tool automatically:
-# - Collects real-time data from the system
-# - Filters out virtual interfaces (veth, br-, lo, tailscale, etc.)
-# - Shows interface name, state, speed, MAC, vendor, and IP addresses
+# If running from source
+python -m netgrid.cli.main
+
+# Or directly from the main file
+python src/netgrid/cli/main.py
 ```
+
+### Command Line Options
+
+NetGrid supports several command-line options to customize the output:
+
+```bash
+# Show all available options
+netgrid --help
+
+# Basic usage with different options
+netgrid                              # Default output
+netgrid --show-ipv6                  # Include IPv6 addresses
+netgrid --no-vendors                 # Skip vendor lookup (faster)
+netgrid --show-summary               # Show interface count summary
+netgrid --color-scheme dark          # Use dark color scheme
+
+# Combine options
+netgrid --show-ipv6 --show-summary --color-scheme high_contrast
+```
+
+### Available Color Schemes
+
+- `default` - Standard colors for most terminals
+- `dark` - Optimized for dark terminal backgrounds
+- `light` - Optimized for light terminal backgrounds  
+- `high_contrast` - High contrast for accessibility
+- `colorblind` - Colorblind-friendly palette
 
 ### Example Output
 
@@ -53,24 +126,200 @@ eno3            up       1Gbps      C4:34:6B:BA:79:6E    Hewlett Packard  -
 eno4            down     -          C4:34:6B:BA:79:6F    Hewlett Packard  -
 ```
 
-## Vendor Lookup and Caching
+## Running Without Installation
 
-NetGrid uses public OUI APIs to look up the vendor for each MAC address. Results are cached locally in `~/.netgrid/cache` for performance and offline use. If a vendor cannot be found, the field will show `-`.
-
-- To disable vendor lookups (for speed or privacy), use the `--no-vendors` option:
+You can run NetGrid directly from the source code without installing it:
 
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/netgrid.git
+cd netgrid
+
+# Install dependencies only
+pip install psutil netifaces requests rich click
+
+# Run directly
+python -m netgrid.cli.main
+# OR
+python src/netgrid/cli/main.py
+```
+
+## Vendor Lookup and Caching
+
+NetGrid uses public OUI APIs to look up the vendor for each MAC address. Results are cached locally in `~/.netgrid/cache` for performance and offline use.
+
+### Vendor Lookup Behavior
+
+- **First run**: Fetches vendor information from internet APIs
+- **Subsequent runs**: Uses cached data for known MAC addresses
+- **Cache location**: `~/.netgrid/cache/vendors.json`
+- **Offline mode**: Works with cached data when internet is unavailable
+
+### Performance Options
+
+```bash
+# Skip vendor lookup for faster execution
+netgrid --no-vendors
+
+# Clear vendor cache (force refresh)
+rm -rf ~/.netgrid/cache
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. "netgrid: command not found"
+
+**Problem**: The `netgrid` command is not in your PATH.
+
+**Solutions**:
+```bash
+# Option A: Activate the virtual environment
+source venv/bin/activate
+netgrid
+
+# Option B: Run directly from source
+python -m netgrid.cli.main
+
+# Option C: Check if installed correctly
+pip list | grep netgrid
+```
+
+#### 2. "Permission denied" or "No interfaces found"
+
+**Problem**: Insufficient privileges to read system network information.
+
+**Solutions**:
+```bash
+# Run with sudo (if needed)
+sudo netgrid
+
+# Or run with user privileges (limited info)
 netgrid --no-vendors
 ```
 
-## Customization and CLI Options
+#### 3. "Module not found" errors
 
-- `--show-ipv6` — Show IPv6 addresses in addition to IPv4
-- `--no-vendors` — Disable vendor lookup (faster, no external requests)
-- `--show-summary` — Show a summary of interface counts and types
-- `--color-scheme` — Choose a color scheme: `default`, `dark`, `light`, `high_contrast`, `colorblind`
+**Problem**: Missing dependencies.
 
-## Project Structure
+**Solutions**:
+```bash
+# Reinstall dependencies
+pip install -r requirements.txt
+
+# Or install specific missing package
+pip install psutil netifaces requests rich click
+```
+
+#### 4. Vendor lookup fails
+
+**Problem**: Network issues or API rate limiting.
+
+**Solutions**:
+```bash
+# Run without vendor lookup
+netgrid --no-vendors
+
+# Check internet connectivity
+ping google.com
+
+# Clear cache and retry
+rm -rf ~/.netgrid/cache
+netgrid
+```
+
+#### 5. "No network interfaces found"
+
+**Problem**: All interfaces are being filtered out.
+
+**Possible causes**:
+- System only has virtual interfaces (Docker, VMs)
+- Running in a container with limited network access
+- Network interfaces have unusual naming
+
+**Check what interfaces exist**:
+```bash
+# Check system interfaces
+ip link show
+# Or
+ifconfig -a
+
+# Run with verbose output (if available)
+python -c "from netgrid.core.interface_collector import InterfaceCollector; print([i.name for i in InterfaceCollector().get_all_interfaces()])"
+```
+
+### System Compatibility
+
+NetGrid is tested on:
+- ✅ Ubuntu 18.04, 20.04, 22.04
+- ✅ CentOS 7, 8
+- ✅ Amazon Linux 2
+- ✅ Debian 10, 11
+- ⚠️ Alpine Linux (limited testing)
+- ❌ Windows (not supported)
+- ❌ macOS (not tested)
+
+## Development
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/netgrid.git
+cd netgrid
+
+# Create development environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install with development dependencies
+pip install uv
+uv pip install -e .[dev]
+
+# Verify installation
+netgrid --help
+```
+
+### Running During Development
+
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Run the tool
+netgrid
+
+# Or run directly from source (without installation)
+python -m netgrid.cli.main
+
+# Or run the main module directly
+python src/netgrid/cli/main.py
+```
+
+### Development Commands
+
+```bash
+# Run tests
+python -m pytest
+
+# Run tests with coverage
+python -m pytest --cov=src
+
+# Format code
+black src/ tests/
+
+# Lint code
+flake8 src/ tests/
+
+# Type checking
+mypy src/
+
+# Run specific test
+python -m pytest tests/core/test_interface_collector.py -v
+```
+
+### Project Structure
 
 ```
 netgrid/
@@ -92,43 +341,6 @@ netgrid/
 └── requirements.txt       # Python dependencies
 ```
 
-## Development
-
-### Setup Development Environment
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/netgrid.git
-cd netgrid
-
-# Create virtual environment and install dependencies
-python3 -m venv venv
-venv/bin/pip install uv
-venv/bin/uv pip install -e .[dev]
-
-# Run tests
-venv/bin/python -m pytest
-
-# Format code
-venv/bin/black src/ tests/
-
-# Lint code
-venv/bin/flake8 src/ tests/
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-venv/bin/python -m pytest
-
-# Run with coverage
-venv/bin/python -m pytest --cov=src
-
-# Run specific test file
-venv/bin/python -m pytest tests/core/test_vendor_lookup.py -v
-```
-
 ## Documentation
 
 - [Installation Guide](docs/user_guide/installation.md)
@@ -147,7 +359,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Roadmap
 
-### Phase 1: Basic Command Line Tool ✅ (In Progress)
+### Phase 1: Basic Command Line Tool ✅ (Complete)
 - [x] Project planning and structure setup
 - [x] Network interface discovery and data collection
 - [x] Real-time system queries (no text files)
