@@ -20,6 +20,7 @@ from .data_models import (
     DuplexMode,
 )
 from .vendor_lookup import VendorLookup
+from .mock_data_provider import MockDataProvider
 
 
 class InterfaceCollector:
@@ -31,16 +32,35 @@ class InterfaceCollector:
     filesystem access.
     """
     
-    def __init__(self, enable_vendor_lookup: bool = True):
+    def __init__(self, enable_vendor_lookup: bool = True, use_mock_data: Optional[bool] = None):
         """
         Initialize the interface collector.
         
         Args:
             enable_vendor_lookup: Whether to enable vendor lookup for MAC addresses
+            use_mock_data: Whether to use mock data instead of real system data.
+                          If None, will check NETGRID_MOCK_MODE environment variable.
         """
         self._interfaces_cache: Optional[InterfaceCollection] = None
         self._vendor_lookup: Optional[VendorLookup] = None
+        self._mock_data_provider: Optional[MockDataProvider] = None
         
+        # Determine if we should use mock data
+        if use_mock_data is None:
+            self._use_mock_data = MockDataProvider.is_mock_mode_enabled()
+        else:
+            self._use_mock_data = use_mock_data
+        
+        # Initialize mock data provider if needed
+        if self._use_mock_data:
+            mock_config = MockDataProvider.get_mock_config()
+            self._mock_data_provider = MockDataProvider(
+                include_virtual=mock_config['include_virtual'],
+                include_filtered=mock_config['include_filtered']
+            )
+            print("NetGrid: Using mock data for testing")
+        
+        # Initialize vendor lookup if enabled
         if enable_vendor_lookup:
             try:
                 self._vendor_lookup = VendorLookup()
@@ -79,6 +99,11 @@ class InterfaceCollector:
         Returns:
             NetworkInterface object if found, None otherwise
         """
+        # Use mock data if enabled
+        if self._use_mock_data and self._mock_data_provider:
+            return self._mock_data_provider.get_interface_by_name(interface_name)
+        
+        # Original system lookup
         interfaces = self.get_all_interfaces()
         return interfaces.get_interface(interface_name)
     
@@ -89,6 +114,17 @@ class InterfaceCollector:
         Returns:
             InterfaceCollection with all discovered interfaces
         """
+        # Use mock data if enabled
+        if self._use_mock_data and self._mock_data_provider:
+            collection = self._mock_data_provider.get_mock_interfaces()
+            
+            # Populate vendor information in bulk if enabled
+            if self._vendor_lookup:
+                self._populate_vendors(collection)
+            
+            return collection
+        
+        # Original system discovery logic
         collection = InterfaceCollection()
         
         # Get basic interface list from /sys/class/net
