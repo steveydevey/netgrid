@@ -7,9 +7,6 @@ styling across the NetGrid application.
 
 from typing import Dict, Any, Optional
 from enum import Enum
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class ColorScheme(Enum):
@@ -218,7 +215,7 @@ class ColorManager:
                 'bold': 'bold',
                 'dim': 'dim',
                 'italic': 'italic',
-            }
+            },
         }
         
         return schemes.get(scheme, schemes[ColorScheme.DEFAULT])
@@ -260,9 +257,9 @@ class ColorManager:
             Formatted state string
         """
         if is_up:
-            return self.format_text("● UP", "up")
+            return self.format_text("UP", "up")
         else:
-            return self.format_text("● DOWN", "down")
+            return self.format_text("DOWN", "down")
     
     def format_interface_type(self, interface_name: str) -> str:
         """
@@ -274,16 +271,14 @@ class ColorManager:
         Returns:
             Formatted type string
         """
-        if 'eno' in interface_name or 'ens' in interface_name:
-            return self.format_text(interface_name, "ethernet")
-        elif 'wlan' in interface_name or 'wifi' in interface_name:
-            return self.format_text(interface_name, "wireless")
-        elif 'veth' in interface_name or 'br-' in interface_name:
-            return self.format_text(interface_name, "virtual")
-        elif 'lo' in interface_name:
-            return self.format_text(interface_name, "loopback")
+        if interface_name == "lo":
+            return self.format_text("Loopback", "loopback")
+        elif interface_name.startswith(("veth", "br-", "docker", "virbr")):
+            return self.format_text("Virtual", "virtual")
+        elif interface_name.startswith(("wlan", "wifi")):
+            return self.format_text("Wireless", "wireless")
         else:
-            return self.format_text(interface_name, "bold")
+            return self.format_text("Ethernet", "ethernet")
     
     def format_ip_address(self, ip: str, is_ipv6: bool = False) -> str:
         """
@@ -337,10 +332,10 @@ class ColorManager:
     
     def get_table_style(self) -> Dict[str, str]:
         """
-        Get table styling for the current color scheme.
+        Get table styling configuration.
         
         Returns:
-            Dictionary of table style properties
+            Dictionary of table style settings
         """
         return {
             'title_style': self.get_color('title'),
@@ -350,7 +345,7 @@ class ColorManager:
     
     def get_message_style(self, message_type: str) -> str:
         """
-        Get message styling for different types.
+        Get message styling for a specific type.
         
         Args:
             message_type: Type of message (error, warning, info, success)
@@ -369,23 +364,22 @@ class ColorManager:
         """
         self.scheme = scheme
         self.colors = self._get_color_scheme(scheme)
-        logger.info(f"Color scheme changed to: {scheme.value}")
     
     def get_available_schemes(self) -> list:
         """
         Get list of available color schemes.
         
         Returns:
-            List of color scheme names
+            List of available color scheme names
         """
         return [scheme.value for scheme in ColorScheme]
     
     def is_colorblind_friendly(self) -> bool:
         """
-        Check if current scheme is colorblind-friendly.
+        Check if current scheme is colorblind friendly.
         
         Returns:
-            True if current scheme is colorblind-friendly
+            True if current scheme is colorblind friendly
         """
         return self.scheme == ColorScheme.COLORBLIND
     
@@ -400,5 +394,4 @@ class ColorManager:
             'name': self.scheme.value,
             'colorblind_friendly': self.is_colorblind_friendly(),
             'available_colors': list(self.colors.keys()),
-            'total_colors': len(self.colors)
         } 
