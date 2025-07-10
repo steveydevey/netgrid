@@ -257,11 +257,19 @@ class InterfaceCollector:
             for iface in ip_data:
                 name = iface.get("ifname")
                 mac_address = iface.get("address")
-                ip_addresses = [addr["local"] for addr in iface.get("addr_info", []) if "local" in addr]
+                
                 # Determine state
                 state = iface.get("operstate", "UNKNOWN").upper()
                 is_up = state == "UP"
                 link_state = LinkState.UP if is_up else LinkState.DOWN
+                
+                # Only collect IP addresses and detect config type for UP interfaces
+                ip_addresses = []
+                ip_config_type = "Unknown"
+                if is_up:
+                    ip_addresses = [addr["local"] for addr in iface.get("addr_info", []) if "local" in addr]
+                    ip_config_type = self._detect_ip_config_type(name)
+                
                 # MTU
                 mtu = iface.get("mtu")
                 # Flags
@@ -274,14 +282,11 @@ class InterfaceCollector:
                 else:
                     interface_type = InterfaceType.PHYSICAL
                 
-                # Detect IP configuration type
-                ip_config_type = self._detect_ip_config_type(name)
-                
                 # Build NetworkInterface
                 ni = NetworkInterface(
                     name=name,
                     link_state=link_state,
-                    speed=None,  # Will be filled by async ethtool lookup
+                    speed=None,  # Will be filled by async ethtool lookup (only for UP interfaces)
                     mac_address=mac_address,
                     ip_addresses=ip_addresses,
                     mtu=mtu,
@@ -291,14 +296,14 @@ class InterfaceCollector:
                     ip_config_type=ip_config_type,
                     description=None,
                     flags=flags,
-                    duplex=None,  # Will be filled by async ethtool lookup
+                    duplex=None,  # Will be filled by async ethtool lookup (only for UP interfaces)
                     extra_data={},
                 )
                 collection.add_interface(ni)
         except Exception as e:
             print(f"Warning: Failed to collect interfaces: {e}")
         
-        # Populate speed and duplex info asynchronously for physical interfaces
+        # Populate speed and duplex info asynchronously for physical interfaces that are UP
         await self._populate_ethtool_info_async(collection)
         
         # Populate vendor information in bulk if enabled
@@ -309,19 +314,20 @@ class InterfaceCollector:
     async def _populate_ethtool_info_async(self, collection: InterfaceCollection) -> None:
         """
         Populate speed and duplex information for physical interfaces using async ethtool calls.
+        Only checks interfaces that are UP.
         
         Args:
             collection: InterfaceCollection to populate ethtool info for
         """
-        physical_interfaces = [iface for iface in collection.interfaces 
-                             if iface.interface_type == InterfaceType.PHYSICAL]
+        physical_up_interfaces = [iface for iface in collection.interfaces 
+                                 if iface.interface_type == InterfaceType.PHYSICAL and iface.is_up]
         
-        if not physical_interfaces:
+        if not physical_up_interfaces:
             return
         
         # Create tasks for all ethtool lookups
         tasks = []
-        for interface in physical_interfaces:
+        for interface in physical_up_interfaces:
             task = self._get_ethtool_info_async(interface.name)
             tasks.append((interface, task))
         
