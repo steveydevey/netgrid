@@ -6,12 +6,13 @@ from netgrid.display.color_manager import ColorManager, ColorScheme
 @click.command()
 @click.option('--show-ipv6', is_flag=True, help='Show IPv6 addresses in addition to IPv4')
 @click.option('--no-vendors', is_flag=True, help='Disable vendor lookup')
+@click.option('--include-virtual', is_flag=True, help='Include virtual interfaces (veth, br-, lo, tailscale, vmsgohere)')
 @click.option('--show-summary', is_flag=True, help='Show interface summary')
 @click.option('--sort-by', type=click.Choice(['name', 'state', 'speed', 'mac', 'vendor', 'ip']), 
               default='name', help='Sort by column (default: name)')
 @click.option('--color-scheme', type=click.Choice(['default', 'dark', 'light', 'high_contrast', 'colorblind']), 
               default='default', help='Color scheme to use')
-def main(show_ipv6, no_vendors, show_summary, sort_by, color_scheme):
+def main(show_ipv6, no_vendors, include_virtual, show_summary, sort_by, color_scheme):
     """
     NetGrid: Display up-to-date network interface information in a table.
     """
@@ -37,14 +38,17 @@ def main(show_ipv6, no_vendors, show_summary, sort_by, color_scheme):
         # Collect up-to-date interface data
         interfaces = collector.get_all_interfaces()
         
-        # Filter out unwanted interfaces
-        filtered = [iface for iface in interfaces if not (
-            iface.name.startswith('veth') or 
-            iface.name.startswith('br-') or
-            iface.name == 'lo' or
-            iface.name.startswith('tailscale') or
-            iface.name == 'vmsgohere'
-        )]
+        # Filter out unwanted interfaces (unless include_virtual is specified)
+        if include_virtual:
+            filtered = interfaces
+        else:
+            filtered = [iface for iface in interfaces if not (
+                iface.name.startswith('veth') or 
+                iface.name.startswith('br-') or
+                iface.name == 'lo' or
+                iface.name.startswith('tailscale') or
+                iface.name == 'vmsgohere'
+            )]
         
         if not filtered:
             click.echo("No network interfaces found (after filtering).")
