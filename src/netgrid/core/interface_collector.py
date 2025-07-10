@@ -41,6 +41,7 @@ class InterfaceCollector:
         """
         self._interfaces_cache: Optional[InterfaceCollection] = None
         self._vendor_lookup: Optional[VendorLookup] = None
+        self._ip_config_cache: Dict[str, str] = {}  # Cache for IP configuration detection
         if enable_vendor_lookup:
             try:
                 self._vendor_lookup = VendorLookup()
@@ -67,6 +68,7 @@ class InterfaceCollector:
             InterfaceCollection containing refreshed interface data
         """
         self._interfaces_cache = None
+        self._ip_config_cache.clear()  # Clear IP config cache on refresh
         return self.get_all_interfaces()
     
     def get_interface_details(self, interface_name: str) -> Optional[NetworkInterface]:
@@ -81,6 +83,163 @@ class InterfaceCollector:
         """
         interfaces = self.get_all_interfaces()
         return interfaces.get_interface(interface_name)
+    
+    def _detect_ip_config_type(self, interface_name: str) -> str:
+        """
+        Detect whether an interface uses DHCP or static IP configuration.
+        
+        Args:
+            interface_name: Name of the interface to check
+            
+        Returns:
+            "DHCP", "Static", or "Unknown"
+        """
+        # Check cache first
+        if interface_name in self._ip_config_cache:
+            return self._ip_config_cache[interface_name]
+        
+        # For virtual interfaces, return Unknown quickly
+        if (interface_name.startswith(('veth', 'br-', 'docker', 'virbr')) or 
+            interface_name == 'lo' or 
+            interface_name.startswith('tailscale')):
+            self._ip_config_cache[interface_name] = "Unknown"
+            return "Unknown"
+        
+        # Quick check for active DHCP client processes (most reliable and fastest)
+        if self._is_dhcp_client_running(interface_name):
+            self._ip_config_cache[interface_name] = "DHCP"
+            return "DHCP"
+        
+        # For physical interfaces, do a quick check of common configuration sources
+        config_type = self._quick_config_check(interface_name)
+        if config_type != "Unknown":
+            self._ip_config_cache[interface_name] = config_type
+            return config_type
+        
+        # Default to Unknown for performance
+        self._ip_config_cache[interface_name] = "Unknown"
+        return "Unknown"
+    
+    def _quick_config_check(self, interface_name: str) -> str:
+        """
+        Quick check of common configuration sources.
+        
+        Args:
+            interface_name: Name of the interface
+            
+        Returns:
+            "DHCP", "Static", or "Unknown"
+        """
+        try:
+            # Check NetworkManager (most common on modern systems)
+            result = subprocess.run(
+                ["systemctl", "is-active", "NetworkManager"],
+                capture_output=True,
+                text=True,
+                timeout=1
+            )
+            if result.returncode == 0 and result.stdout.strip() == "active":
+                # Quick NetworkManager check
+                result = subprocess.run(
+                    ["nmcli", "-t", "-f", "DEVICE,TYPE", "connection", "show", "--active"],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                if result.returncode == 0:
+                    for line in result.stdout.split('\n'):
+                        if line.strip() and interface_name in line:
+                            # Found the interface, check if it's DHCP
+                            if 'ethernet' in line.lower():
+                                # For ethernet, assume DHCP unless we can prove otherwise
+                                return "DHCP"
+            
+            # Check systemd-networkd
+            result = subprocess.run(
+                ["systemctl", "is-active", "systemd-networkd"],
+                capture_output=True,
+                text=True,
+                timeout=1
+            )
+            if result.returncode == 0 and result.stdout.strip() == "active":
+                # Quick systemd-networkd check
+                result = subprocess.run(
+                    ["networkctl", "status", interface_name],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                if result.returncode == 0:
+                    if "DHCP" in result.stdout:
+                        return "DHCP"
+                    elif "static" in result.stdout.lower():
+                        return "Static"
+                        
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
+            pass
+        
+        return "Unknown"
+    
+    def _is_dhcp_client_running(self, interface_name: str) -> bool:
+        """
+        Check if a DHCP client is actively running for the interface.
+        
+        Args:
+            interface_name: Name of the interface
+            
+        Returns:
+            True if DHCP client is running for this interface
+        """
+        try:
+            # Check for dhclient processes (fastest check)
+            result = subprocess.run(
+                ["pgrep", "-f", f"dhclient.*{interface_name}"],
+                capture_output=True,
+                text=True,
+                timeout=1
+            )
+            if result.returncode == 0:
+                return True
+            
+            # Check for systemd-networkd DHCP (quick check)
+            result = subprocess.run(
+                ["systemctl", "is-active", "systemd-networkd"],
+                capture_output=True,
+                text=True,
+                timeout=1
+            )
+            if result.returncode == 0 and result.stdout.strip() == "active":
+                # Quick check if interface is managed by systemd-networkd with DHCP
+                result = subprocess.run(
+                    ["networkctl", "status", interface_name],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                if result.returncode == 0 and "DHCP" in result.stdout:
+                    return True
+            
+            # Check for NetworkManager DHCP (quick check)
+            result = subprocess.run(
+                ["systemctl", "is-active", "NetworkManager"],
+                capture_output=True,
+                text=True,
+                timeout=1
+            )
+            if result.returncode == 0 and result.stdout.strip() == "active":
+                result = subprocess.run(
+                    ["nmcli", "-t", "-f", "DEVICE,TYPE", "device", "show", interface_name],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                if result.returncode == 0 and "dhcp" in result.stdout.lower():
+                    return True
+                    
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
+            pass
+        
+        return False
     
     async def _discover_interfaces_async(self) -> InterfaceCollection:
         """
@@ -114,6 +273,10 @@ class InterfaceCollector:
                     interface_type = InterfaceType.VIRTUAL
                 else:
                     interface_type = InterfaceType.PHYSICAL
+                
+                # Detect IP configuration type
+                ip_config_type = self._detect_ip_config_type(name)
+                
                 # Build NetworkInterface
                 ni = NetworkInterface(
                     name=name,
@@ -125,7 +288,7 @@ class InterfaceCollector:
                     driver=None,
                     interface_type=interface_type,
                     vendor=None,
-                    ip_config_type="Static",
+                    ip_config_type=ip_config_type,
                     description=None,
                     flags=flags,
                     duplex=None,  # Will be filled by async ethtool lookup
