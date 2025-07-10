@@ -21,7 +21,7 @@ def main(show_ipv6, no_vendors, show_summary, color_scheme):
         click.echo(f"Error: Invalid color scheme '{color_scheme}'")
         return
     
-    # Initialize interface collector with vendor lookup
+    # Initialize interface collector with vendor lookup toggle
     try:
         collector = InterfaceCollector(enable_vendor_lookup=not no_vendors)
     except Exception as e:

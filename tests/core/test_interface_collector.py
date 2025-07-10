@@ -54,4 +54,14 @@ def test_convenience_functions():
     iface = interfaces[0]
     details = get_interface_details(iface.name)
     assert details is not None
-    assert details.name == iface.name 
+    assert details.name == iface.name
+
+
+def test_ip_config_type_field():
+    collector = InterfaceCollector()
+    interfaces = collector.get_all_interfaces()
+    if not interfaces:
+        pytest.skip("No interfaces found to test ip_config_type.")
+    for iface in interfaces:
+        assert hasattr(iface, 'ip_config_type'), f"Interface {iface.name} missing ip_config_type field"
+        assert iface.ip_config_type in ("DHCP", "Static", "Unknown"), f"Unexpected ip_config_type: {iface.ip_config_type} for {iface.name}" 

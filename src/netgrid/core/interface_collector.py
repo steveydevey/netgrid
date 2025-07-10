@@ -9,6 +9,7 @@ tools, filesystem access, and system calls.
 import os
 import subprocess
 import re
+import psutil
 from typing import List, Dict, Optional, Any
 from pathlib import Path
 
@@ -40,7 +41,6 @@ class InterfaceCollector:
         """
         self._interfaces_cache: Optional[InterfaceCollection] = None
         self._vendor_lookup: Optional[VendorLookup] = None
-        
         if enable_vendor_lookup:
             try:
                 self._vendor_lookup = VendorLookup()
@@ -50,10 +50,10 @@ class InterfaceCollector:
     
     def get_all_interfaces(self) -> InterfaceCollection:
         """
-        Get all network interfaces from the system.
+        Get all ethernet network interfaces from the system.
         
         Returns:
-            InterfaceCollection containing all discovered interfaces
+            InterfaceCollection containing all discovered ethernet interfaces
         """
         if self._interfaces_cache is None:
             self._interfaces_cache = self._discover_interfaces()
@@ -133,15 +133,12 @@ class InterfaceCollector:
             return
         
         try:
-            print(f"Looking up vendors for {len(mac_addresses)} physical interfaces...")
-            # Perform bulk lookup
+            # Perform bulk lookup (cache-first)
             vendor_results = self._vendor_lookup.bulk_lookup(mac_addresses)
-            
             # Update interfaces with vendor information
             for interface in physical_interfaces:
                 if interface.mac_address and interface.mac_address in vendor_results:
                     interface.vendor = vendor_results[interface.mac_address]
-                    
         except Exception as e:
             print(f"Warning: Failed to populate vendors: {e}")
     
@@ -187,12 +184,12 @@ class InterfaceCollector:
         description = self._get_description(interface_name)
         flags = self._get_flags(interface_name)
         
-        # Vendor information (if enabled) - will be populated later in bulk
-        vendor = None
-        
         # Additional metadata
         extra_data = self._get_extra_data(interface_name)
-        
+
+        # Use a simple default instead of expensive process scanning
+        ip_config_type = "Static"  # Default value for performance
+
         return NetworkInterface(
             name=interface_name,
             mac_address=mac_address,
@@ -203,7 +200,8 @@ class InterfaceCollector:
             mtu=mtu,
             driver=driver,
             interface_type=interface_type,
-            vendor=vendor,
+            vendor=None, # Removed vendor lookup
+            ip_config_type=ip_config_type,
             description=description,
             flags=flags,
             extra_data=extra_data

@@ -65,6 +65,7 @@ class TableFormatter:
             ("State", "green", "center"),
             ("Speed", "yellow", "center"),
             ("MAC", "blue", "left"),
+            ("IP Config", "white", "center"),
         ]
         
         if show_vendors:
@@ -124,6 +125,9 @@ class TableFormatter:
         # MAC address
         mac = f"[blue]{interface.mac_address}[/blue]"
         
+        # IP Config type
+        ip_config = f"[white]{interface.ip_config_type}[/white]" if interface.ip_config_type else "[dim]-[/dim]"
+        
         # Vendor (if enabled)
         vendor = ""
         if show_vendors and hasattr(interface, 'vendor') and interface.vendor:
@@ -135,7 +139,7 @@ class TableFormatter:
         ip_addresses = self._format_ip_addresses(interface, show_ipv6)
         
         # Build row data
-        row_data = [name, state, speed, mac]
+        row_data = [name, state, speed, mac, ip_config]
         
         if show_vendors:
             row_data.append(vendor)

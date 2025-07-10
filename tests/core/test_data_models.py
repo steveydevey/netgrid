@@ -166,6 +166,12 @@ class TestNetworkInterface:
         )
         assert str(interface2) == "eth1: DOWN"
 
+    def test_network_interface_ip_config_type(self):
+        iface = NetworkInterface(name='eth0', ip_config_type='DHCP')
+        assert iface.ip_config_type == 'DHCP'
+        iface2 = NetworkInterface(name='eth1')
+        assert iface2.ip_config_type == 'Unknown'
+
 
 class TestInterfaceCollection:
     """Test cases for the InterfaceCollection class."""

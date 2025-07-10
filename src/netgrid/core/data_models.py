@@ -63,6 +63,9 @@ class NetworkInterface:
     # Vendor information
     vendor: Optional[str] = None
     
+    # IP configuration type (DHCP, Static, Unknown)
+    ip_config_type: str = "Unknown"
+    
     # Additional metadata
     description: Optional[str] = None
     flags: List[str] = field(default_factory=list)
@@ -142,6 +145,7 @@ class NetworkInterface:
             'driver': self.driver,
             'interface_type': self.interface_type.value,
             'vendor': self.vendor,
+            'ip_config_type': self.ip_config_type,
             'description': self.description,
             'flags': self.flags,
             'extra_data': self.extra_data,
