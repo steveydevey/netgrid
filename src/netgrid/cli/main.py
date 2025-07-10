@@ -7,9 +7,11 @@ from netgrid.display.color_manager import ColorManager, ColorScheme
 @click.option('--show-ipv6', is_flag=True, help='Show IPv6 addresses in addition to IPv4')
 @click.option('--no-vendors', is_flag=True, help='Disable vendor lookup')
 @click.option('--show-summary', is_flag=True, help='Show interface summary')
+@click.option('--sort-by', type=click.Choice(['name', 'state', 'speed', 'mac', 'vendor', 'ip']), 
+              default='name', help='Sort by column (default: name)')
 @click.option('--color-scheme', type=click.Choice(['default', 'dark', 'light', 'high_contrast', 'colorblind']), 
               default='default', help='Color scheme to use')
-def main(show_ipv6, no_vendors, show_summary, color_scheme):
+def main(show_ipv6, no_vendors, show_summary, sort_by, color_scheme):
     """
     NetGrid: Display up-to-date network interface information in a table.
     """
@@ -53,7 +55,8 @@ def main(show_ipv6, no_vendors, show_summary, color_scheme):
             interfaces=filtered,
             show_vendors=not no_vendors,
             show_ipv6=show_ipv6,
-            show_summary=show_summary
+            show_summary=show_summary,
+            sort_by=sort_by
         )
         
     except Exception as e:

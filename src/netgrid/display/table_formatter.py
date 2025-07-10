@@ -37,7 +37,8 @@ class TableFormatter:
     
     def format_interfaces_table(self, interfaces: List[NetworkInterface], 
                                show_vendors: bool = True,
-                               show_ipv6: bool = False) -> str:
+                               show_ipv6: bool = False,
+                               sort_by: str = "name") -> str:
         """
         Format network interfaces into a table.
         
@@ -45,10 +46,14 @@ class TableFormatter:
             interfaces: List of network interface objects
             show_vendors: Whether to include vendor information
             show_ipv6: Whether to show IPv6 addresses
+            sort_by: Column to sort by (name, state, speed, mac, vendor, ip)
             
         Returns:
             Formatted table string
         """
+        # Sort interfaces before formatting
+        sorted_interfaces = self.sort_interfaces(interfaces, sort_by)
+        
         table = Table(
             title="Network Interfaces",
             title_style="bold blue",
@@ -62,9 +67,9 @@ class TableFormatter:
         # Define columns
         columns = [
             ("Name", "cyan", "left"),
-            ("State", "green", "center"),
             ("Speed", "yellow", "center"),
             ("MAC", "blue", "left"),
+            ("MTU", "white", "center"),
             ("IP Config", "white", "center"),
         ]
         
@@ -78,7 +83,7 @@ class TableFormatter:
             table.add_column(column_name, style=style, justify=justify)
         
         # Add rows
-        for interface in interfaces:
+        for interface in sorted_interfaces:
             row_data = self._format_interface_row(
                 interface, show_vendors, show_ipv6
             )
@@ -94,6 +99,36 @@ class TableFormatter:
         
         return panel
     
+    def sort_interfaces(self, interfaces: List[NetworkInterface], sort_by: str) -> List[NetworkInterface]:
+        """
+        Sort interfaces by the specified column.
+        
+        Args:
+            interfaces: List of network interface objects
+            sort_by: Column to sort by (name, state, speed, mac, vendor, ip)
+            
+        Returns:
+            Sorted list of interfaces
+        """
+        if not interfaces:
+            return interfaces
+        
+        # Define sort key functions
+        sort_keys = {
+            "name": lambda x: x.name.lower(),  # Default sort by name
+            "state": lambda x: (0 if x.is_up else 1, x.name.lower()),  # UP first, then by name
+            "speed": lambda x: (x.speed or 0, x.name.lower()),  # None speeds last
+            "mac": lambda x: x.mac_address or "",
+            "vendor": lambda x: (x.vendor or "", x.name.lower()),
+            "ip": lambda x: (x.primary_ip or "", x.name.lower()),
+        }
+        
+        # Get the sort key function, default to name
+        sort_key = sort_keys.get(sort_by.lower(), sort_keys["name"])
+        
+        # Sort the interfaces
+        return sorted(interfaces, key=sort_key)
+    
     def _format_interface_row(self, interface: NetworkInterface, 
                              show_vendors: bool, show_ipv6: bool) -> List[str]:
         """
@@ -107,14 +142,11 @@ class TableFormatter:
         Returns:
             List of formatted cell values
         """
-        # Interface name
-        name = f"[bold]{interface.name}[/bold]"
-        
-        # State with color coding
+        # Interface name with color based on state
         if interface.is_up:
-            state = "[green]● UP[/green]"
+            name = f"[green]● {interface.name}[/green]"
         else:
-            state = "[red]● DOWN[/red]"
+            name = f"[red]● {interface.name}[/red]"
         
         # Speed
         if interface.speed:
@@ -124,6 +156,12 @@ class TableFormatter:
         
         # MAC address
         mac = f"[blue]{interface.mac_address}[/blue]"
+        
+        # MTU
+        if interface.mtu:
+            mtu = f"[white]{interface.mtu}[/white]"
+        else:
+            mtu = "[dim]-[/dim]"
         
         # IP Config type
         ip_config = f"[white]{interface.ip_config_type}[/white]" if interface.ip_config_type else "[dim]-[/dim]"
@@ -139,7 +177,7 @@ class TableFormatter:
         ip_addresses = self._format_ip_addresses(interface, show_ipv6)
         
         # Build row data
-        row_data = [name, state, speed, mac, ip_config]
+        row_data = [name, speed, mac, mtu, ip_config]
         
         if show_vendors:
             row_data.append(vendor)
@@ -276,7 +314,8 @@ class TableFormatter:
     def print_table(self, interfaces: List[NetworkInterface], 
                    show_vendors: bool = True,
                    show_ipv6: bool = False,
-                   show_summary: bool = False) -> None:
+                   show_summary: bool = False,
+                   sort_by: str = "mac") -> None:
         """
         Print formatted table to console.
         
@@ -285,9 +324,10 @@ class TableFormatter:
             show_vendors: Whether to include vendor information
             show_ipv6: Whether to show IPv6 addresses
             show_summary: Whether to show summary information
+            sort_by: Column to sort by (name, state, speed, mac, vendor, ip)
         """
         # Print main table
-        table = self.format_interfaces_table(interfaces, show_vendors, show_ipv6)
+        table = self.format_interfaces_table(interfaces, show_vendors, show_ipv6, sort_by)
         self.console.print(table)
         
         # Print summary if requested
