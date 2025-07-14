@@ -1,6 +1,5 @@
 # Core dependencies
 psutil>=5.8.0
-netifaces>=0.11.0
 requests>=2.25.0
 rich>=12.0.0
 click>=8.0.0
