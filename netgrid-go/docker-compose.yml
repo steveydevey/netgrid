@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Build service for creating the binary
+  build:
+    build:
+      context: .
+      target: builder
+    volumes:
+      - ./bin:/app/bin
+    command: sh -c "go build -o /app/bin/netgrid-go . && chmod +x /app/bin/netgrid-go"
+    
+  # Runtime service for testing the application
+  netgrid-go:
+    build: .
+    container_name: netgrid-go
+    network_mode: host  # Required to access host network interfaces
+    volumes:
+      - /proc:/proc:ro  # Read-only access to /proc for network info
+      - /sys:/sys:ro    # Read-only access to /sys for network info
+    environment:
+      - TERM=xterm-256color  # Enable colors in terminal
+    stdin_open: true
+    tty: true
+    profiles:
+      - runtime
+
+  # Development service with source code mounted
+  dev:
+    build:
+      context: .
+      target: builder
+    container_name: netgrid-go-dev
+    network_mode: host
+    volumes:
+      - .:/app
+      - /proc:/proc:ro
+      - /sys:/sys:ro
+    environment:
+      - TERM=xterm-256color
+    working_dir: /app
+    command: sh
+    stdin_open: true
+    tty: true
+    profiles:
+      - dev 
