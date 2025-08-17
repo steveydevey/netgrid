@@ -1,31 +1,58 @@
 # NetGrid Source Code Structure
 
-## Directory Layout
+## Dual Language Implementation
+
+NetGrid is implemented in both Python and Go, providing users with flexibility in deployment and runtime preferences.
+
+## Python Implementation
+
+### Directory Layout
 
 ```
 src/
 ├── __init__.py
-├── core/                    # Core business logic
+├── netgrid/
 │   ├── __init__.py
-│   ├── interface_collector.py
-│   ├── vendor_lookup.py
-│   └── data_models.py
-├── display/                 # Output formatting and display
-│   ├── __init__.py
-│   ├── table_formatter.py
-│   └── color_manager.py
-├── utils/                   # Utility functions and helpers
-│   ├── __init__.py
-│   ├── system_utils.py
-│   └── cache_manager.py
-└── cli/                     # Command line interface
-    ├── __init__.py
-    └── main.py
+│   ├── core/                    # Core business logic
+│   │   ├── __init__.py
+│   │   ├── interface_collector.py
+│   │   ├── vendor_lookup.py
+│   │   └── data_models.py
+│   ├── display/                 # Output formatting and display
+│   │   ├── __init__.py
+│   │   ├── table_formatter.py
+│   │   └── color_manager.py
+│   ├── utils/                   # Utility functions and helpers
+│   │   ├── __init__.py
+│   │   └── cache_manager.py
+│   └── cli/                     # Command line interface
+│       ├── __init__.py
+│       └── main.py
 ```
 
-## Module Details
+## Go Implementation
 
-### Core Module (`src/core/`)
+### Directory Layout
+
+```
+cmd/
+└── netgrid/                 # Main application entry point
+    └── main.go
+internal/
+├── models/                  # Data models and structures
+│   └── interface.go
+├── collector/               # System interface collection
+│   └── interface_collector.go
+└── display/                 # Output formatting and colors
+    ├── colors.go
+    └── formatter.go
+go.mod                       # Go module definition
+go.sum                       # Go module checksums
+```
+
+## Module Details - Python Implementation
+
+### Core Module (`src/netgrid/core/`)
 
 #### `data_models.py`
 **Purpose**: Define data structures for network interface information
@@ -79,7 +106,7 @@ src/
 - `requests` for HTTP lookups
 - Local cache file for offline operation
 
-### Display Module (`src/display/`)
+### Display Module (`src/netgrid/display/`)
 
 #### `table_formatter.py`
 **Purpose**: Format network interface data into tables
@@ -109,7 +136,7 @@ src/
 - `apply_color(text, color)`: Apply color to text
 - `get_status_color(status)`: Get appropriate color for link status
 
-### Utils Module (`src/utils/`)
+### Utils Module (`src/netgrid/utils/`)
 
 #### `system_utils.py`
 **Purpose**: System-specific operations and utilities
@@ -131,7 +158,7 @@ src/
   - `save_cache()`: Save cache to file
   - `clear_cache()`: Clear all cached data
 
-### CLI Module (`src/cli/`)
+### CLI Module (`src/netgrid/cli/`)
 
 #### `main.py`
 **Purpose**: Command line interface entry point
@@ -147,6 +174,53 @@ src/
 - `--no-color`: Disable color output
 - `--sort-by`: Sort by specific column
 - `--filter`: Filter interfaces by criteria
+
+## Go Implementation Details
+
+### Models (`internal/models/`)
+
+#### `interface.go`
+**Purpose**: Data structures for network interface information
+
+**Structs**:
+- `NetworkInterface`: Main interface data structure
+- `InterfaceList`: Collection of interfaces with methods
+
+### Collector (`internal/collector/`)
+
+#### `interface_collector.go`
+**Purpose**: System interface discovery and data collection
+
+**Functions**:
+- `GetAllInterfaces()`: Collect all network interfaces
+- `GetInterfaceDetails()`: Get detailed information for specific interface
+- `FilterInterfaces()`: Apply filtering logic
+
+### Display (`internal/display/`)
+
+#### `colors.go`
+**Purpose**: Color scheme management
+
+**Functions**:
+- `GetColorScheme()`: Get color scheme by name
+- `ApplyColors()`: Apply colors to output
+
+#### `formatter.go`
+**Purpose**: Table formatting and output
+
+**Functions**:
+- `FormatTable()`: Create formatted table output
+- `FormatInterface()`: Format single interface data
+
+### CLI (`cmd/netgrid/main.go`)
+
+**Purpose**: Command line interface and application entry point
+
+**Features**:
+- Command line argument parsing
+- Color scheme selection
+- Output formatting options
+- Sorting and filtering
 
 ## Implementation Order
 
