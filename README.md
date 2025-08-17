@@ -2,6 +2,15 @@
 
 A command line tool to provide users with a visual table of information about network interfaces attached to the system, including link state, IP address(es), MAC address, speed, vendor information, and more.
 
+## Available Implementations
+
+NetGrid is available in two implementations:
+
+- **Python Version** ([Installation](#installation)): Full-featured implementation with comprehensive testing and mature ecosystem integration
+- **Go Version** ([Go README](README-go.md)): High-performance implementation with fast startup times and single binary deployment
+
+Both versions provide identical functionality and CLI interfaces. Choose based on your deployment preferences and performance requirements.
+
 ## Features
 
 - **Real-time Interface Discovery**: Live system queries using `/sys`, `/proc`, and system tools
@@ -12,7 +21,9 @@ A command line tool to provide users with a visual table of information about ne
 - **Customizable Output**: Options for color scheme, summary, and disabling vendor lookups
 - **Future-Ready**: Architecture designed to support real-time ncurses-style updates
 
-## Installation
+## Installation (Python Version)
+
+For the Go version, see [README-go.md](README-go.md).
 
 ### Method 1: Install from Source (Recommended)
 
