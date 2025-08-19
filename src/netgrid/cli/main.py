@@ -2,6 +2,35 @@ import click
 from netgrid.core.interface_collector import InterfaceCollector
 from netgrid.display.table_formatter import TableFormatter
 from netgrid.display.color_manager import ColorManager, ColorScheme
+from netgrid.core.constants import (
+    VIRTUAL_INTERFACE_PREFIXES,
+    VIRTUAL_INTERFACE_NAMES,
+    VIRTUAL_INTERFACE_TAILSCALE_PREFIX,
+    DEFAULT_SORT_BY,
+    DEFAULT_COLOR_SCHEME,
+    ERROR_INVALID_COLOR_SCHEME,
+    ERROR_INIT_COLLECTOR,
+    ERROR_DISPLAY_INTERFACES,
+    ERROR_NO_INTERFACES,
+)
+
+
+def _is_virtual_interface(interface_name: str) -> bool:
+    """
+    Check if an interface is virtual.
+    
+    Args:
+        interface_name: Name of the interface to check
+        
+    Returns:
+        True if the interface is virtual, False otherwise
+    """
+    return (
+        interface_name.startswith(VIRTUAL_INTERFACE_PREFIXES) or
+        interface_name in VIRTUAL_INTERFACE_NAMES or
+        interface_name.startswith(VIRTUAL_INTERFACE_TAILSCALE_PREFIX)
+    )
+
 
 @click.command()
 @click.option('--show-ipv6', is_flag=True, help='Show IPv6 addresses in addition to IPv4')
@@ -9,9 +38,9 @@ from netgrid.display.color_manager import ColorManager, ColorScheme
 @click.option('--include-virtual', is_flag=True, help='Include virtual interfaces (veth, br-, lo, tailscale, vmsgohere)')
 @click.option('--show-summary', is_flag=True, help='Show interface summary')
 @click.option('--sort-by', type=click.Choice(['name', 'state', 'speed', 'mac', 'vendor', 'ip']), 
-              default='name', help='Sort by column (default: name)')
+              default=DEFAULT_SORT_BY, help=f'Sort by column (default: {DEFAULT_SORT_BY})')
 @click.option('--color-scheme', type=click.Choice(['default', 'dark', 'light', 'high_contrast', 'colorblind']), 
-              default='default', help='Color scheme to use')
+              default=DEFAULT_COLOR_SCHEME, help='Color scheme to use')
 def main(show_ipv6, no_vendors, include_virtual, show_summary, sort_by, color_scheme):
     """
     NetGrid: Display up-to-date network interface information in a table.
@@ -21,14 +50,14 @@ def main(show_ipv6, no_vendors, include_virtual, show_summary, sort_by, color_sc
         scheme = ColorScheme(color_scheme)
         color_manager = ColorManager(scheme)
     except ValueError:
-        click.echo(f"Error: Invalid color scheme '{color_scheme}'")
+        click.echo(ERROR_INVALID_COLOR_SCHEME.format(scheme=color_scheme))
         return
     
     # Initialize interface collector with vendor lookup toggle
     try:
         collector = InterfaceCollector(enable_vendor_lookup=not no_vendors)
     except Exception as e:
-        click.echo(f"Error initializing interface collector: {e}")
+        click.echo(ERROR_INIT_COLLECTOR.format(error=e))
         return
     
     # Initialize table formatter
@@ -42,16 +71,10 @@ def main(show_ipv6, no_vendors, include_virtual, show_summary, sort_by, color_sc
         if include_virtual:
             filtered = interfaces
         else:
-            filtered = [iface for iface in interfaces if not (
-                iface.name.startswith('veth') or 
-                iface.name.startswith('br-') or
-                iface.name == 'lo' or
-                iface.name.startswith('tailscale') or
-                iface.name == 'vmsgohere'
-            )]
+            filtered = [iface for iface in interfaces if not _is_virtual_interface(iface.name)]
         
         if not filtered:
-            click.echo("No network interfaces found (after filtering).")
+            click.echo(ERROR_NO_INTERFACES)
             return
         
         # Display the table using the formatter
@@ -64,7 +87,7 @@ def main(show_ipv6, no_vendors, include_virtual, show_summary, sort_by, color_sc
         )
         
     except Exception as e:
-        click.echo(f"Error displaying interfaces: {e}")
+        click.echo(ERROR_DISPLAY_INTERFACES.format(error=e))
         return
 
 if __name__ == "__main__":

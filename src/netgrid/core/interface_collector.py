@@ -21,6 +21,22 @@ from .data_models import (
     DuplexMode,
 )
 from .vendor_lookup import VendorLookup
+from .constants import (
+    VIRTUAL_INTERFACE_PREFIXES,
+    VIRTUAL_INTERFACE_NAMES,
+    VIRTUAL_INTERFACE_TAILSCALE_PREFIX,
+    IP_CONFIG_DHCP,
+    IP_CONFIG_STATIC,
+    IP_CONFIG_UNKNOWN,
+    SUBPROCESS_TIMEOUT,
+    ETHPOOL_TIMEOUT,
+    DHCP_CHECK_TIMEOUT,
+    NETWORKMANAGER_TIMEOUT,
+    WARNING_VENDOR_LOOKUP_DISABLED,
+    WARNING_IP_COMMAND_FAILED,
+    WARNING_COLLECT_INTERFACES,
+    WARNING_POPULATE_VENDORS,
+)
 
 
 class InterfaceCollector:
@@ -46,7 +62,7 @@ class InterfaceCollector:
             try:
                 self._vendor_lookup = VendorLookup()
             except Exception as e:
-                print(f"Warning: Vendor lookup disabled due to error: {e}")
+                print(WARNING_VENDOR_LOOKUP_DISABLED.format(error=e))
                 self._vendor_lookup = None
     
     def get_all_interfaces(self) -> InterfaceCollection:
@@ -84,6 +100,22 @@ class InterfaceCollector:
         interfaces = self.get_all_interfaces()
         return interfaces.get_interface(interface_name)
     
+    def _is_virtual_interface(self, interface_name: str) -> bool:
+        """
+        Check if an interface is virtual.
+        
+        Args:
+            interface_name: Name of the interface to check
+            
+        Returns:
+            True if the interface is virtual, False otherwise
+        """
+        return (
+            interface_name.startswith(VIRTUAL_INTERFACE_PREFIXES) or
+            interface_name in VIRTUAL_INTERFACE_NAMES or
+            interface_name.startswith(VIRTUAL_INTERFACE_TAILSCALE_PREFIX)
+        )
+    
     def _detect_ip_config_type(self, interface_name: str) -> str:
         """
         Detect whether an interface uses DHCP or static IP configuration.
@@ -99,26 +131,24 @@ class InterfaceCollector:
             return self._ip_config_cache[interface_name]
         
         # For virtual interfaces, return Unknown quickly
-        if (interface_name.startswith(('veth', 'br-', 'docker', 'virbr')) or 
-            interface_name == 'lo' or 
-            interface_name.startswith('tailscale')):
-            self._ip_config_cache[interface_name] = "Unknown"
-            return "Unknown"
+        if self._is_virtual_interface(interface_name):
+            self._ip_config_cache[interface_name] = IP_CONFIG_UNKNOWN
+            return IP_CONFIG_UNKNOWN
         
         # Quick check for active DHCP client processes (most reliable and fastest)
         if self._is_dhcp_client_running(interface_name):
-            self._ip_config_cache[interface_name] = "DHCP"
-            return "DHCP"
+            self._ip_config_cache[interface_name] = IP_CONFIG_DHCP
+            return IP_CONFIG_DHCP
         
         # For physical interfaces, do a quick check of common configuration sources
         config_type = self._quick_config_check(interface_name)
-        if config_type != "Unknown":
+        if config_type != IP_CONFIG_UNKNOWN:
             self._ip_config_cache[interface_name] = config_type
             return config_type
         
         # Default to Unknown for performance
-        self._ip_config_cache[interface_name] = "Unknown"
-        return "Unknown"
+        self._ip_config_cache[interface_name] = IP_CONFIG_UNKNOWN
+        return IP_CONFIG_UNKNOWN
     
     def _quick_config_check(self, interface_name: str) -> str:
         """
@@ -136,7 +166,7 @@ class InterfaceCollector:
                 ["systemctl", "is-active", "NetworkManager"],
                 capture_output=True,
                 text=True,
-                timeout=1
+                timeout=DHCP_CHECK_TIMEOUT
             )
             if result.returncode == 0 and result.stdout.strip() == "active":
                 # Quick NetworkManager check
@@ -144,7 +174,7 @@ class InterfaceCollector:
                     ["nmcli", "-t", "-f", "DEVICE,TYPE", "connection", "show", "--active"],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=NETWORKMANAGER_TIMEOUT
                 )
                 if result.returncode == 0:
                     for line in result.stdout.split('\n'):
@@ -152,14 +182,14 @@ class InterfaceCollector:
                             # Found the interface, check if it's DHCP
                             if 'ethernet' in line.lower():
                                 # For ethernet, assume DHCP unless we can prove otherwise
-                                return "DHCP"
+                                return IP_CONFIG_DHCP
             
             # Check systemd-networkd
             result = subprocess.run(
                 ["systemctl", "is-active", "systemd-networkd"],
                 capture_output=True,
                 text=True,
-                timeout=1
+                timeout=DHCP_CHECK_TIMEOUT
             )
             if result.returncode == 0 and result.stdout.strip() == "active":
                 # Quick systemd-networkd check
@@ -167,18 +197,18 @@ class InterfaceCollector:
                     ["networkctl", "status", interface_name],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=NETWORKMANAGER_TIMEOUT
                 )
                 if result.returncode == 0:
                     if "DHCP" in result.stdout:
-                        return "DHCP"
+                        return IP_CONFIG_DHCP
                     elif "static" in result.stdout.lower():
-                        return "Static"
+                        return IP_CONFIG_STATIC
                         
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
             pass
         
-        return "Unknown"
+        return IP_CONFIG_UNKNOWN
     
     def _is_dhcp_client_running(self, interface_name: str) -> bool:
         """
@@ -196,46 +226,21 @@ class InterfaceCollector:
                 ["pgrep", "-f", f"dhclient.*{interface_name}"],
                 capture_output=True,
                 text=True,
-                timeout=1
+                timeout=DHCP_CHECK_TIMEOUT
             )
-            if result.returncode == 0:
+            if result.returncode == 0 and result.stdout.strip():
                 return True
             
-            # Check for systemd-networkd DHCP (quick check)
+            # Check for systemd-networkd DHCP status
             result = subprocess.run(
-                ["systemctl", "is-active", "systemd-networkd"],
+                ["networkctl", "status", interface_name],
                 capture_output=True,
                 text=True,
-                timeout=1
+                timeout=DHCP_CHECK_TIMEOUT
             )
-            if result.returncode == 0 and result.stdout.strip() == "active":
-                # Quick check if interface is managed by systemd-networkd with DHCP
-                result = subprocess.run(
-                    ["networkctl", "status", interface_name],
-                    capture_output=True,
-                    text=True,
-                    timeout=2
-                )
-                if result.returncode == 0 and "DHCP" in result.stdout:
-                    return True
-            
-            # Check for NetworkManager DHCP (quick check)
-            result = subprocess.run(
-                ["systemctl", "is-active", "NetworkManager"],
-                capture_output=True,
-                text=True,
-                timeout=1
-            )
-            if result.returncode == 0 and result.stdout.strip() == "active":
-                result = subprocess.run(
-                    ["nmcli", "-t", "-f", "DEVICE,TYPE", "device", "show", interface_name],
-                    capture_output=True,
-                    text=True,
-                    timeout=2
-                )
-                if result.returncode == 0 and "dhcp" in result.stdout.lower():
-                    return True
-                    
+            if result.returncode == 0 and "dhcp" in result.stdout.lower():
+                return True
+                
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
             pass
         
@@ -249,9 +254,9 @@ class InterfaceCollector:
         """
         collection = InterfaceCollection()
         try:
-            result = subprocess.run(["ip", "-j", "addr", "show"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(["ip", "-j", "addr", "show"], capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT)
             if result.returncode != 0:
-                print(f"Warning: Failed to run 'ip -j addr show': {result.stderr}")
+                print(WARNING_IP_COMMAND_FAILED.format(error=result.stderr))
                 return collection
             ip_data = json.loads(result.stdout)
             for iface in ip_data:
@@ -265,7 +270,7 @@ class InterfaceCollector:
                 
                 # Only collect IP addresses and detect config type for UP interfaces
                 ip_addresses = []
-                ip_config_type = "Unknown"
+                ip_config_type = IP_CONFIG_UNKNOWN
                 if is_up:
                     ip_addresses = [addr["local"] for addr in iface.get("addr_info", []) if "local" in addr]
                     ip_config_type = self._detect_ip_config_type(name)
@@ -277,7 +282,7 @@ class InterfaceCollector:
                 # Interface type (simple heuristic)
                 if name == "lo":
                     interface_type = InterfaceType.LOOPBACK
-                elif name.startswith(("veth", "br-", "docker", "virbr")):
+                elif self._is_virtual_interface(name):
                     interface_type = InterfaceType.VIRTUAL
                 else:
                     interface_type = InterfaceType.PHYSICAL
@@ -301,7 +306,7 @@ class InterfaceCollector:
                 )
                 collection.add_interface(ni)
         except Exception as e:
-            print(f"Warning: Failed to collect interfaces: {e}")
+            print(WARNING_COLLECT_INTERFACES.format(error=e))
         
         # Populate speed and duplex info asynchronously for physical interfaces that are UP
         await self._populate_ethtool_info_async(collection)
@@ -360,7 +365,7 @@ class InterfaceCollector:
                     ["ethtool", interface_name],
                     capture_output=True,
                     text=True,
-                    timeout=3
+                    timeout=ETHPOOL_TIMEOUT
                 )
             )
             
@@ -403,7 +408,7 @@ class InterfaceCollector:
         for interface in collection.interfaces:
             if (interface.mac_address and 
                 interface.interface_type == InterfaceType.PHYSICAL and
-                not interface.name.startswith(('veth', 'br-', 'docker', 'virbr'))):
+                not self._is_virtual_interface(interface.name)):
                 mac_addresses.append(interface.mac_address)
                 physical_interfaces.append(interface)
         
@@ -418,29 +423,4 @@ class InterfaceCollector:
                 if interface.mac_address and interface.mac_address in vendor_results:
                     interface.vendor = vendor_results[interface.mac_address]
         except Exception as e:
-            print(f"Warning: Failed to populate vendors: {e}")
-
-
-def get_all_interfaces() -> InterfaceCollection:
-    """
-    Convenience function to get all network interfaces.
-    
-    Returns:
-        InterfaceCollection with all interfaces
-    """
-    collector = InterfaceCollector()
-    return collector.get_all_interfaces()
-
-
-def get_interface_details(interface_name: str) -> Optional[NetworkInterface]:
-    """
-    Convenience function to get details for a specific interface.
-    
-    Args:
-        interface_name: Name of the interface
-        
-    Returns:
-        NetworkInterface object if found, None otherwise
-    """
-    collector = InterfaceCollector()
-    return collector.get_interface_details(interface_name) 
+            print(WARNING_POPULATE_VENDORS.format(error=e)) 

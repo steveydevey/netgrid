@@ -33,6 +33,9 @@ Both versions provide identical functionality and CLI interfaces. Choose based o
 ## Installation (Python Version)
 
 For the Go version, see [README-go.md](README-go.md).
+## Installation (Python Version)
+
+For the Go version, see [README-go.md](README-go.md).
 
 ### Method 1: Install from Source (Recommended)
 

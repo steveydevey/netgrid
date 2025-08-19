@@ -7,7 +7,7 @@ tests gracefully if no interfaces are found.
 """
 
 import pytest
-from netgrid.core.interface_collector import InterfaceCollector, get_all_interfaces, get_interface_details
+from netgrid.core.interface_collector import InterfaceCollector
 from netgrid.core.data_models import LinkState, InterfaceType
 
 
@@ -44,15 +44,6 @@ def test_get_interface_details():
         pytest.skip("No interfaces found to test get_interface_details.")
     iface = interfaces[0]
     details = collector.get_interface_details(iface.name)
-    assert details is not None
-    assert details.name == iface.name
-
-
-def test_convenience_functions():
-    interfaces = get_all_interfaces()
-    assert len(interfaces) > 0
-    iface = interfaces[0]
-    details = get_interface_details(iface.name)
     assert details is not None
     assert details.name == iface.name
 
