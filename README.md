@@ -2,6 +2,9 @@
 
 A command line tool to provide users with a visual table of information about network interfaces attached to the system, including link state, IP address(es), MAC address, speed, vendor information, and more.
 
+> **Why did the network administrator go broke?**  
+> Because he had too many *interfaces* to pay for! 😄
+
 ## Available Implementations
 
 NetGrid is available in two implementations:
