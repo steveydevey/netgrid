@@ -160,3 +160,43 @@ ethtool_info.txt
 allips
 ips
 links
+
+# Additional build and temporary files
+*.prof
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Go-related files (if any Go code exists)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
