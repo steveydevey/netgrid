@@ -4,6 +4,12 @@ A command line tool to provide users with a visual table of information about ne
 
 > **Why did the network administrator go broke?**  
 > Because he had too many *interfaces* to pay for! 😄
+This joke sucks. I don't want computers to try to make me laugh. 
+
+# here is a cool instruction
+do all the cool stuff
+cat file | sort | uniq
+
 
 ## Available Implementations
 
