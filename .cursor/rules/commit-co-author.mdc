@@ -1,0 +1,69 @@
+# Commit Co-Author Requirement
+
+<rule>
+name: commit_co_author_requirement
+description: Ensures all commit messages include a co-author note for Cursor
+filters:
+  # Match git commit operations
+  - type: event
+    pattern: "git_commit|commit_message|stage_changes"
+  
+  # Match when creating or editing commit messages
+  - type: content
+    pattern: "(?i)(commit|stage|git)"
+
+actions:
+  - type: require
+    conditions:
+      - pattern: "(?i)co-authored-by.*cursor"
+        message: "Commit message must include 'Co-authored-by: Cursor <cursor@cursor.sh>'"
+    
+  - type: suggest
+    message: |
+      When creating commit messages, always include:
+      
+      ```
+      Co-authored-by: Cursor <cursor@cursor.sh>
+      ```
+      
+      This should be added at the end of the commit message, after the main description.
+      
+      Example:
+      ```
+      feat: implement vendor lookup system
+      
+      - Add OUI database integration
+      - Implement caching mechanism
+      - Add vendor information to table output
+      
+      Co-authored-by: Cursor <cursor@cursor.sh>
+      ```
+
+  - type: enforce
+    conditions:
+      - pattern: "^(?!.*co-authored-by.*cursor)"
+        message: "Commit message missing required co-author note for Cursor"
+
+examples:
+  - input: |
+      feat: add network interface filtering
+      
+      - Filter out virtual interfaces
+      - Add speed information display
+    output: |
+      feat: add network interface filtering
+      
+      - Filter out virtual interfaces
+      - Add speed information display
+      
+      Co-authored-by: Cursor <cursor@cursor.sh>
+
+metadata:
+  priority: high
+  version: 1.0
+  category: "git_workflow"
+</rule>
+description:
+globs:
+alwaysApply: false
+---
