@@ -1,0 +1,54 @@
+# Testing Standards for NetGrid
+
+## Test Coverage Requirements
+- Aim for 90%+ code coverage across all modules
+- Test all public functions and methods
+- Cover both success and failure scenarios
+- Test edge cases and boundary conditions
+- Mock external dependencies consistently
+
+## Test Organization
+- Mirror source directory structure in tests/
+- Use descriptive test names that explain the scenario
+- Group related tests in test classes when appropriate
+- Keep individual tests focused on one behavior
+- Use fixtures for common test data and setup
+
+## Mocking Strategy
+- Mock all system calls (psutil, netifaces, file operations)
+- Mock network requests for vendor lookups
+- Use pytest-mock for consistent mocking
+- Verify mock calls when testing behavior
+- Reset mocks between tests to avoid interference
+
+## Test Data
+- Use realistic test data that represents real network interfaces
+- Create test fixtures for common interface configurations
+- Test with various interface types (ethernet, wireless, virtual)
+- Include edge cases like missing speed information
+- Test with both IPv4 and IPv6 addresses
+
+## Performance Testing
+- Test interface discovery performance (< 100ms target)
+- Verify table formatting performance (< 50ms target)
+- Test memory usage with large numbers of interfaces
+- Benchmark vendor lookup caching effectiveness
+- Test error handling performance
+
+## Integration Testing
+- Test complete CLI workflows end-to-end
+- Verify interface filtering works correctly
+- Test vendor lookup integration with caching
+- Verify table output formatting
+- Test error handling in real scenarios
+
+## Test Maintenance
+- Keep tests up to date with code changes
+- Refactor tests when implementation changes
+- Remove obsolete tests promptly
+- Use parameterized tests for similar scenarios
+- Document complex test scenarios
+description:
+globs:
+alwaysApply: false
+---

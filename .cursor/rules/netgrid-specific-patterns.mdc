@@ -1,0 +1,48 @@
+# NetGrid Project-Specific Patterns
+
+## Network Interface Handling
+- Always filter out virtual interfaces: veth, br-, lo, tailscale, vmsgohere
+- Use real-time system queries for interface information
+- Handle cases where interfaces may disappear during execution
+- Cache vendor lookup results to avoid repeated API calls
+
+## Data Models
+- Use dataclasses for network interface data structures
+- Include all relevant fields: name, state, speed, MAC, IP addresses
+- Make fields optional where appropriate (e.g., speed may not be available)
+- Use proper typing for network-related fields (IPv4Address, IPv6Address)
+
+## CLI Design
+- Keep CLI interface simple and focused
+- Use Click for command-line argument parsing
+- Provide clear help text for all options
+- Support filtering and sorting options
+- Output should be clean, aligned tables
+
+## Vendor Lookup System
+- Implement caching for OUI database lookups
+- Handle network failures gracefully
+- Use appropriate HTTP status codes for error handling
+- Consider rate limiting for external API calls
+
+## Testing Network Code
+- Mock system calls (psutil, netifaces) in tests
+- Test interface filtering logic thoroughly
+- Verify vendor lookup caching behavior
+- Test error conditions (network failures, missing interfaces)
+
+## Performance Targets
+- Interface discovery: < 100ms
+- Table formatting: < 50ms
+- Overall response time: < 200ms
+- Memory usage: < 10MB for typical interface counts
+
+## Future-Ready Architecture
+- Design for real-time updates (ncurses-style)
+- Consider event-driven architecture for monitoring
+- Plan for cross-platform compatibility
+- Keep performance in mind for large numbers of interfaces
+description:
+globs:
+alwaysApply: false
+---

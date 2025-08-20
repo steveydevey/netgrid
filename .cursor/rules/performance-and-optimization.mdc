@@ -1,0 +1,54 @@
+# Performance and Optimization Standards
+
+## Response Time Targets
+- Interface discovery: < 100ms
+- Table formatting: < 50ms
+- Overall CLI response: < 200ms
+- Vendor lookup (cached): < 10ms
+- Vendor lookup (uncached): < 500ms
+
+## Memory Usage Guidelines
+- Keep memory usage under 10MB for typical interface counts
+- Use efficient data structures (lists over dicts where appropriate)
+- Avoid loading large datasets into memory unnecessarily
+- Implement lazy loading for vendor databases
+- Monitor memory usage during development
+
+## Caching Strategy
+- Cache vendor lookup results persistently
+- Cache system interface information during single execution
+- Use appropriate cache expiration for dynamic data
+- Implement cache size limits to prevent memory bloat
+- Consider cache warming for frequently accessed data
+
+## System Call Optimization
+- Minimize system calls during interface discovery
+- Batch operations where possible
+- Use efficient file reading for system information
+- Avoid repeated calls to the same system resources
+- Cache system call results when safe to do so
+
+## Data Structure Efficiency
+- Use appropriate data types for network addresses
+- Minimize object creation in tight loops
+- Use generators for large datasets
+- Avoid unnecessary string operations
+- Profile code to identify bottlenecks
+
+## Future Performance Considerations
+- Design for real-time monitoring scenarios
+- Consider event-driven architecture for updates
+- Plan for handling hundreds of interfaces
+- Optimize for both CPU and I/O bound operations
+- Keep performance in mind for cross-platform compatibility
+
+## Performance Testing
+- Include performance benchmarks in test suite
+- Test with realistic interface counts
+- Monitor memory usage during tests
+- Profile code execution for bottlenecks
+- Set performance regression tests
+description:
+globs:
+alwaysApply: false
+---

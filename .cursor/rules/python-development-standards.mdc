@@ -1,0 +1,44 @@
+# Python Development Standards for NetGrid
+
+## Code Style and Quality
+- Follow PEP 8 style guidelines strictly
+- Use Python 3.8+ features and type hints for all function parameters and return values
+- Write comprehensive docstrings for all public APIs using Google-style format
+- Keep functions focused and single-purpose (max 20-30 lines)
+- Use meaningful variable and function names that reflect their purpose
+
+## Architecture Principles
+- Maintain modular architecture with clear separation of concerns
+- Keep core business logic in `src/netgrid/core/`
+- Place display/formatting logic in `src/netgrid/display/`
+- Put utility functions in `src/netgrid/utils/`
+- CLI interface should be thin and delegate to core modules
+
+## Testing Requirements
+- Write unit tests for all new functionality
+- Aim for 90%+ test coverage
+- Test both happy path and edge cases
+- Use descriptive test names that explain what is being tested
+- Mock external dependencies (system calls, network requests)
+
+## Import Organization
+- Group imports: standard library, third-party, local
+- Use absolute imports for project modules
+- Avoid circular imports between modules
+- Keep imports at the top of the file
+
+## Error Handling
+- Use specific exception types rather than generic Exception
+- Provide meaningful error messages
+- Log errors appropriately for debugging
+- Handle edge cases gracefully (e.g., network interfaces that disappear)
+
+## Performance Considerations
+- Optimize for sub-second response time
+- Cache expensive operations (vendor lookups, system queries)
+- Use efficient data structures for large datasets
+- Consider memory usage for real-time monitoring scenarios
+description:
+globs:
+alwaysApply: false
+---

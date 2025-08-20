@@ -1,0 +1,47 @@
+# Documentation Standards for NetGrid
+
+## Code Documentation
+- Every public function, class, and module must have a docstring
+- Use Google-style docstring format for consistency
+- Include parameter types, return types, and examples
+- Document exceptions that may be raised
+- Keep docstrings concise but comprehensive
+
+## README and User Documentation
+- Keep README.md focused on user installation and usage
+- Include clear installation instructions with virtual environment setup
+- Provide usage examples with expected output
+- Document all CLI options and their effects
+- Keep user documentation in `docs/` directory
+
+## Developer Documentation
+- Maintain comprehensive project plans in `plans/` directory
+- Document architecture decisions and rationale
+- Keep technical specifications up to date
+- Include setup instructions for development environment
+- Document testing procedures and coverage requirements
+
+## API Documentation
+- Document all public interfaces clearly
+- Include type hints for all function signatures
+- Provide usage examples for complex functions
+- Document data models and their relationships
+- Keep API documentation in sync with implementation
+
+## Planning Documents
+- Update project status regularly in planning documents
+- Track completed and pending features
+- Document technical decisions and trade-offs
+- Include performance benchmarks and targets
+- Plan for future phases and features
+
+## Code Comments
+- Use comments to explain "why" not "what"
+- Comment complex algorithms and business logic
+- Explain non-obvious implementation details
+- Keep comments up to date with code changes
+- Use TODO comments for future improvements
+description:
+globs:
+alwaysApply: false
+---
