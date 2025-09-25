@@ -1,0 +1,158 @@
+---
+# Whoogle PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whoogle-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: longhorn
+
+---
+# Whoogle Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoogle
+  namespace: privacy-stack
+  labels:
+    app: whoogle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whoogle
+  template:
+    metadata:
+      labels:
+        app: whoogle
+    spec:
+      containers:
+      - name: whoogle
+        image: benbusby/whoogle-search:0.9.2
+        ports:
+        - containerPort: 5000
+          name: http
+        env:
+        # Basic configuration
+        - name: WHOOGLE_CONFIG_DISABLE
+          value: "0"
+        - name: WHOOGLE_CONFIG_SEARCH_LANGUAGE
+          value: "en"
+        - name: WHOOGLE_CONFIG_RESULT_LANGUAGE
+          value: "en"
+        - name: WHOOGLE_CONFIG_COUNTRY
+          value: "US"
+        
+        # Privacy and security settings
+        - name: WHOOGLE_CONFIG_SAFE
+          value: "1"
+        - name: WHOOGLE_CONFIG_PREFERENCES_ENCRYPTION
+          value: "1"
+        - name: WHOOGLE_CONFIG_GET_ONLY
+          value: "1"
+        - name: WHOOGLE_CONFIG_BLOCK
+          value: "0"
+        
+        # UI preferences
+        - name: WHOOGLE_CONFIG_THEME
+          value: "dark"
+        - name: WHOOGLE_CONFIG_ALTS
+          value: "1"
+        
+        # View settings
+        - name: WHOOGLE_CONFIG_VIEW_IMAGE
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_VIDEO
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_PDF
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_DOC
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_XLS
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_PPT
+          value: "1"
+        
+        # Additional view types
+        - name: WHOOGLE_CONFIG_VIEW_RSS
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_TORRENT
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_MAGNET
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_IPFS
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_ONION
+          value: "1"
+        
+        # Social media and platforms
+        - name: WHOOGLE_CONFIG_VIEW_YOUTUBE
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_TWITCH
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_INSTAGRAM
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_FACEBOOK
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_TWITTER
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_REDDIT
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_PINTEREST
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_LINKEDIN
+          value: "1"
+        
+        # Privacy-focused alternatives
+        - name: WHOOGLE_CONFIG_VIEW_MASTODON
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_PEERTUBE
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_LBRY
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_ODYSEE
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_BITCHUTE
+          value: "1"
+        - name: WHOOGLE_CONFIG_VIEW_RUMBLE
+          value: "1"
+        
+        volumeMounts:
+        - name: whoogle-storage
+          mountPath: "/app/whoogle_data"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: whoogle-storage
+        persistentVolumeClaim:
+          claimName: whoogle-pvc
+
+---
+# Whoogle Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoogle
+  namespace: privacy-stack
+  labels:
+    app: whoogle
+spec:
+  selector:
+    app: whoogle
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+    protocol: TCP
+  type: ClusterIP

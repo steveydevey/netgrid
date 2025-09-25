@@ -1,0 +1,159 @@
+---
+# Unbound PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unbound-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+  storageClassName: longhorn
+
+---
+# Unbound ConfigMap for configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unbound-config
+  namespace: privacy-stack
+data:
+  unbound.conf: |
+    server:
+        # If no logfile is specified, syslog is used
+        logfile: "/var/log/unbound/unbound.log"
+        verbosity: 1
+        port: 53
+        do-ip4: yes
+        do-ip6: yes
+        do-udp: yes
+        do-tcp: yes
+        hide-identity: yes
+        hide-version: yes
+        harden-glue: yes
+        harden-dnssec-stripped: yes
+        harden-referral-path: yes
+        harden-algo-downgrade: yes
+        use-caps-for-id: yes
+        cache-min-ttl: 3600
+        cache-max-ttl: 86400
+        prefetch: yes
+        prefetch-key: yes
+        rrset-roundrobin: yes
+        minimal-responses: yes
+        disable-dnssec-lame-check: yes
+        trust-anchor-signaling: yes
+        root-hints: "/var/lib/unbound/root.hints"
+        auto-trust-anchor-file: "/var/lib/unbound/root.key"
+        val-clean-additional: yes
+        private-address: 192.168.0.0/16
+        private-address: 172.16.0.0/12
+        private-address: 10.0.0.0/8
+        private-address: 169.254.0.0/16
+        private-address: fd00::/8
+        private-address: fe80::/10
+        control-interface: 0.0.0.0
+        control-port: 8953
+        control-use-cert: no
+
+    # Cloudflare DNS
+    forward-zone:
+        name: "."
+        forward-addr: 1.1.1.1@853
+        forward-addr: 1.0.0.1@853
+        forward-ssl-upstream: yes
+
+    # Quad9 DNS (backup)
+    forward-zone:
+        name: "."
+        forward-addr: 9.9.9.9@853
+        forward-addr: 149.112.112.112@853
+        forward-ssl-upstream: yes
+
+---
+# Unbound Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unbound
+  namespace: privacy-stack
+  labels:
+    app: unbound
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unbound
+  template:
+    metadata:
+      labels:
+        app: unbound
+    spec:
+      containers:
+      - name: unbound
+        image: mvance/unbound:1.19.3
+        ports:
+        - containerPort: 53
+          name: dns-udp
+          protocol: UDP
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        - containerPort: 8953
+          name: control
+          protocol: TCP
+        volumeMounts:
+        - name: unbound-config
+          mountPath: "/opt/unbound/etc/unbound/unbound.conf"
+          subPath: unbound.conf
+        - name: unbound-storage
+          mountPath: "/var/log/unbound"
+        - name: unbound-storage
+          mountPath: "/var/lib/unbound"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: unbound-config
+        configMap:
+          name: unbound-config
+      - name: unbound-storage
+        persistentVolumeClaim:
+          claimName: unbound-pvc
+
+---
+# Unbound Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: unbound
+  namespace: privacy-stack
+  labels:
+    app: unbound
+spec:
+  selector:
+    app: unbound
+  ports:
+  - name: dns-udp
+    port: 53
+    targetPort: 53
+    protocol: UDP
+  - name: dns-tcp
+    port: 53
+    targetPort: 53
+    protocol: TCP
+  - name: control
+    port: 8953
+    targetPort: 8953
+    protocol: TCP
+  type: ClusterIP

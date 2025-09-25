@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: privacy-stack
+  labels:
+    name: privacy-stack
+    purpose: privacy-focused-services
