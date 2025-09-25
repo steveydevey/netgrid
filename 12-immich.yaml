@@ -1,0 +1,382 @@
+---
+# Immich Database PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-db-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: longhorn
+
+---
+# Immich Library PersistentVolumeClaim (NFS for shared access)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: nfs-client
+
+---
+# Immich Upload PersistentVolumeClaim (NFS for shared access)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-upload-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: nfs-client
+
+---
+# Immich Redis PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-redis-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: longhorn
+
+---
+# Immich Database Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-db
+  namespace: privacy-stack
+  labels:
+    app: immich-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-db
+  template:
+    metadata:
+      labels:
+        app: immich-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: "immich"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "changeme123"  # Change this password!
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        volumeMounts:
+        - name: immich-db-storage
+          mountPath: "/var/lib/postgresql/data"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: immich-db-storage
+        persistentVolumeClaim:
+          claimName: immich-db-pvc
+
+---
+# Immich Database Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-db
+  namespace: privacy-stack
+  labels:
+    app: immich-db
+spec:
+  selector:
+    app: immich-db
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Immich Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-redis
+  namespace: privacy-stack
+  labels:
+    app: immich-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-redis
+  template:
+    metadata:
+      labels:
+        app: immich-redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+        command:
+        - redis-server
+        - --requirepass
+        - "changeme123"  # Change this password!
+        - --appendonly
+        - "yes"
+        volumeMounts:
+        - name: immich-redis-storage
+          mountPath: "/data"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: immich-redis-storage
+        persistentVolumeClaim:
+          claimName: immich-redis-pvc
+
+---
+# Immich Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-redis
+  namespace: privacy-stack
+  labels:
+    app: immich-redis
+spec:
+  selector:
+    app: immich-redis
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Immich Server Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-server
+  namespace: privacy-stack
+  labels:
+    app: immich-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-server
+  template:
+    metadata:
+      labels:
+        app: immich-server
+    spec:
+      containers:
+      - name: immich-server
+        image: ghcr.io/immich-app/immich:latest
+        command: ["immich"]
+        args: ["start", "immich"]
+        ports:
+        - containerPort: 3001
+          name: http
+        env:
+        # Database configuration
+        - name: DB_HOSTNAME
+          value: "immich-db"
+        - name: DB_USERNAME
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "changeme123"
+        - name: DB_DATABASE_NAME
+          value: "immich"
+        - name: DB_PORT
+          value: "5432"
+        
+        # Redis configuration
+        - name: REDIS_HOSTNAME
+          value: "immich-redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          value: "changeme123"
+        
+        # Application settings
+        - name: IMMICH_LOG_LEVEL
+          value: "log"
+        - name: NODE_ENV
+          value: "production"
+        
+        # Storage paths
+        - name: IMMICH_UPLOAD_LOCATION
+          value: "/usr/src/app/upload"
+        - name: IMMICH_MEDIA_LOCATION
+          value: "/usr/src/app/library"
+        
+        # Security settings
+        - name: IMMICH_SECRET_KEY
+          value: "changeme123456789012345678901234567890123456789012345678901234567890"  # Change this secret key!
+        
+        volumeMounts:
+        - name: immich-library-storage
+          mountPath: "/usr/src/app/library"
+        - name: immich-upload-storage
+          mountPath: "/usr/src/app/upload"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: immich-library-storage
+        persistentVolumeClaim:
+          claimName: immich-library-pvc
+      - name: immich-upload-storage
+        persistentVolumeClaim:
+          claimName: immich-upload-pvc
+
+---
+# Immich Server Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-server
+  namespace: privacy-stack
+  labels:
+    app: immich-server
+spec:
+  selector:
+    app: immich-server
+  ports:
+  - name: http
+    port: 3001
+    targetPort: 3001
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Immich Microservices Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-microservices
+  namespace: privacy-stack
+  labels:
+    app: immich-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-microservices
+  template:
+    metadata:
+      labels:
+        app: immich-microservices
+    spec:
+      containers:
+      - name: immich-microservices
+        image: ghcr.io/immich-app/immich:latest
+        command: ["immich"]
+        args: ["start", "microservices"]
+        env:
+        # Database configuration
+        - name: DB_HOSTNAME
+          value: "immich-db"
+        - name: DB_USERNAME
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "changeme123"
+        - name: DB_DATABASE_NAME
+          value: "immich"
+        - name: DB_PORT
+          value: "5432"
+        
+        # Redis configuration
+        - name: REDIS_HOSTNAME
+          value: "immich-redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          value: "changeme123"
+        
+        # Application settings
+        - name: IMMICH_LOG_LEVEL
+          value: "log"
+        - name: NODE_ENV
+          value: "production"
+        
+        # Storage paths
+        - name: IMMICH_UPLOAD_LOCATION
+          value: "/usr/src/app/upload"
+        - name: IMMICH_MEDIA_LOCATION
+          value: "/usr/src/app/library"
+        
+        # Security settings
+        - name: IMMICH_SECRET_KEY
+          value: "changeme123456789012345678901234567890123456789012345678901234567890"  # Change this secret key!
+        
+        volumeMounts:
+        - name: immich-library-storage
+          mountPath: "/usr/src/app/library"
+        - name: immich-upload-storage
+          mountPath: "/usr/src/app/upload"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: immich-library-storage
+        persistentVolumeClaim:
+          claimName: immich-library-pvc
+      - name: immich-upload-storage
+        persistentVolumeClaim:
+          claimName: immich-upload-pvc

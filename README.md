@@ -1,415 +1,279 @@
-# NetGrid
+# Privacy-Focused Services Stack for K3s
 
-A command line tool to provide users with a visual table of information about network interfaces attached to the system, including link state, IP address(es), MAC address, speed, vendor information, and more.
+This repository contains Kubernetes YAML manifests to deploy a comprehensive privacy-focused services stack on your K3s cluster with Longhorn and NFS storage support.
 
-## Available Implementations
+## 🚀 Services Included
 
-NetGrid is available in two implementations:
+Based on the XDA Developers article "Building Privacy-Focused Life: Docker Containers Are Non-Negotiable", this stack includes:
 
-- **Python Version** ([Installation](#installation)): Full-featured implementation with comprehensive testing and mature ecosystem integration
-- **Go Version** ([Go README](README-go.md)): High-performance implementation with fast startup times and single binary deployment
+### Core Privacy Services
+- **Pi-hole** - Network-wide ad blocker and DNS server
+- **Unbound** - Validating, recursive, and caching DNS resolver
+- **Whoogle** - Self-hosted, privacy-respecting metasearch engine
+- **WireGuard** - Modern, fast VPN with state-of-the-art cryptography
 
-Both versions provide identical functionality and CLI interfaces. Choose based on your deployment preferences and performance requirements.
+### Productivity & Organization
+- **Vaultwarden** - Self-hosted Bitwarden-compatible password manager
+- **Tududi** - Self-hosted to-do list application
+- **Linkwarden** - Self-hosted bookmark manager
+- **Nextcloud** - Self-hosted file sharing and collaboration platform
 
-## Features
+### Media & Content
+- **Kavita** - Self-hosted e-book reader and comic library manager
+- **Tandoor** - Self-hosted recipe manager
+- **Immich** - Self-hosted photo and video backup solution
 
-- **Real-time Interface Discovery**: Live system queries using `/sys`, `/proc`, and system tools
-- **Comprehensive Interface Information**: Display link state, IP addresses, MAC addresses, speed, MTU, driver info, vendor (with OUI lookup and caching), and more
-- **Smart Filtering**: Automatically filters out virtual interfaces (veth, br-, lo, tailscale, etc.)
-- **Beautiful Output**: Clean, readable table format with proper alignment and color
-- **Vendor Lookup with Caching**: MAC address vendor information is fetched using public OUI APIs and cached locally for performance and offline use
-- **Customizable Output**: Options for color scheme, summary, and disabling vendor lookups
-- **Future-Ready**: Architecture designed to support real-time ncurses-style updates
+### Automation
+- **n8n** - Self-hosted workflow automation tool
 
-## Installation (Python Version)
+## 📋 Prerequisites
 
-For the Go version, see [README-go.md](README-go.md).
+### K3s Cluster
+- K3s cluster running and accessible
+- `kubectl` configured to connect to your cluster
 
-### Method 1: Install from Source (Recommended)
+### Storage Requirements
+- **Longhorn** - For block storage (databases, application data)
+- **NFS Storage** - For shared file storage (media files, uploads)
 
+### Installation Commands
+
+#### Install Longhorn
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/netgrid.git
-cd netgrid
-
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Linux/macOS
-# OR
-venv\Scripts\activate     # On Windows
-
-# Install uv for faster package management
-pip install uv
-
-# Install NetGrid in development mode
-uv pip install -e .
+kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/deploy/longhorn.yaml
 ```
 
-### Method 2: Quick Install with pip
-
+#### Install NFS Subdir External Provisioner
 ```bash
-# Create virtual environment (recommended)
-python3 -m venv netgrid-env
-source netgrid-env/bin/activate
+# Add Helm repository
+helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+helm repo update
 
-# Install dependencies directly
-pip install -r requirements.txt
-
-# Run from source directory
-python -m netgrid.cli.main
+# Install NFS provisioner (replace with your NFS server details)
+helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+  --set nfs.server=<NFS_SERVER_IP> \
+  --set nfs.path=<NFS_SHARE_PATH>
 ```
 
-### Method 3: System-wide Installation
+## 🚀 Quick Deployment
 
-⚠️ **Warning**: Installing packages system-wide can cause conflicts. Virtual environments are recommended.
-
+### Automated Deployment
 ```bash
-# Install dependencies system-wide
-sudo pip install psutil netifaces requests rich click
+# Clone or download the manifests
+git clone <repository-url>
+cd privacy-stack
 
-# Clone and run
-git clone https://github.com/yourusername/netgrid.git
-cd netgrid
-python -m netgrid.cli.main
+# Run the deployment script
+./deploy.sh
 ```
 
-## Requirements
-
-- **Python**: 3.8 or newer
-- **Operating System**: Linux (tested on Ubuntu, CentOS, Amazon Linux)
-- **Privileges**: Some features may require root privileges for full system access
-- **Network**: Internet connection for vendor lookup (optional)
-
-## Quick Start
-
-### Basic Usage
-
-After installation, you can run NetGrid in several ways:
-
+### Manual Deployment
 ```bash
-# If installed with setup.py (Method 1)
-netgrid
-
-# If running from source
-python -m netgrid.cli.main
-
-# Or directly from the main file
-python src/netgrid/cli/main.py
+# Deploy in order
+kubectl apply -f 00-namespace.yaml
+kubectl apply -f 01-storage-classes.yaml
+kubectl apply -f 02-pihole.yaml
+kubectl apply -f 03-unbound.yaml
+kubectl apply -f 04-whoogle.yaml
+kubectl apply -f 05-vaultwarden.yaml
+kubectl apply -f 06-tududi.yaml
+kubectl apply -f 07-linkwarden.yaml
+kubectl apply -f 08-nextcloud.yaml
+kubectl apply -f 09-kavita.yaml
+kubectl apply -f 10-tandoor.yaml
+kubectl apply -f 11-n8n.yaml
+kubectl apply -f 12-immich.yaml
+kubectl apply -f 13-wireguard.yaml
+kubectl apply -f 14-ingress.yaml
 ```
 
-### Command Line Options
+## 🌐 Access Information
 
-NetGrid supports several command-line options to customize the output:
+After deployment, services will be available at:
 
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Pi-hole | http://pihole.local | DNS & Ad-blocking |
+| Whoogle | http://whoogle.local | Privacy-focused search |
+| Vaultwarden | http://vaultwarden.local | Password manager |
+| Tududi | http://tududi.local | To-do list |
+| Linkwarden | http://linkwarden.local | Bookmark manager |
+| Nextcloud | http://nextcloud.local | File sharing |
+| Kavita | http://kavita.local | E-book reader |
+| Tandoor | http://tandoor.local | Recipe manager |
+| n8n | http://n8n.local | Workflow automation |
+| Immich | http://immich.local | Photo management |
+
+## 🔐 Default Credentials (CHANGE THESE!)
+
+**⚠️ CRITICAL: Change all default passwords and secrets before production use!**
+
+| Service | Username | Password/Token |
+|---------|----------|----------------|
+| Pi-hole | - | changeme123 |
+| Vaultwarden | - | changeme123 |
+| Nextcloud | admin | changeme123 |
+| n8n | admin | changeme123 |
+
+## 📁 Storage Configuration
+
+### Longhorn (Block Storage)
+Used for:
+- Databases (PostgreSQL, MariaDB, Redis)
+- Application configuration data
+- Small file storage
+
+### NFS (Shared File Storage)
+Used for:
+- Media files (photos, videos, books)
+- File uploads
+- Shared documents
+
+## 🔧 Configuration
+
+### DNS Configuration
+Update your local DNS or `/etc/hosts` file to resolve service domains:
+```
+<CLUSTER_IP> pihole.local
+<CLUSTER_IP> whoogle.local
+<CLUSTER_IP> vaultwarden.local
+<CLUSTER_IP> tududi.local
+<CLUSTER_IP> linkwarden.local
+<CLUSTER_IP> nextcloud.local
+<CLUSTER_IP> kavita.local
+<CLUSTER_IP> tandoor.local
+<CLUSTER_IP> n8n.local
+<CLUSTER_IP> immich.local
+```
+
+### SSL/TLS Configuration
+For production use:
+1. Obtain SSL certificates (Let's Encrypt recommended)
+2. Update Ingress configurations to use HTTPS
+3. Configure certificate secrets in Kubernetes
+
+### Resource Limits
+Adjust resource requests and limits in the manifests based on your hardware:
+- **Minimum**: 4 CPU cores, 8GB RAM
+- **Recommended**: 8 CPU cores, 16GB RAM
+- **Storage**: 100GB+ for media files
+
+## 🛠️ Troubleshooting
+
+### Check Service Status
 ```bash
-# Show all available options
-netgrid --help
+# View all pods
+kubectl get pods -n privacy-stack
 
-# Basic usage with different options
-netgrid                              # Default output
-netgrid --show-ipv6                  # Include IPv6 addresses
-netgrid --no-vendors                 # Skip vendor lookup (faster)
-netgrid --show-summary               # Show interface count summary
-netgrid --color-scheme dark          # Use dark color scheme
+# Check specific service logs
+kubectl logs -f deployment/<service-name> -n privacy-stack
 
-# Combine options
-netgrid --show-ipv6 --show-summary --color-scheme high_contrast
+# Describe pod for detailed information
+kubectl describe pod <pod-name> -n privacy-stack
 ```
 
-### Available Color Schemes
-
-- `default` - Standard colors for most terminals
-- `dark` - Optimized for dark terminal backgrounds
-- `light` - Optimized for light terminal backgrounds  
-- `high_contrast` - High contrast for accessibility
-- `colorblind` - Colorblind-friendly palette
-
-### Example Output
-
-```
-Name            State    Speed      MAC                  Vendor           IP Addresses
--------------------------------------------------------------------------------
-eno1            up       1Gbps      C4:34:6B:BA:79:6C    Hewlett Packard  192.168.254.77, fe80::c634:6bff:feba:796c
-eno2            up       1Gbps      C4:34:6B:BA:79:6D    Hewlett Packard  fe80::c634:6bff:feba:796d
-ens1f0          up       10Gbps     A0:36:9F:B3:06:54    Intel Corporate  192.168.254.132, fe80::a236:9fff:feb3:654
-ens1f1          up       10Gbps     A0:36:9F:B3:06:55    Intel Corporate  fe80::a236:9fff:feb3:655
-eno3            up       1Gbps      C4:34:6B:BA:79:6E    Hewlett Packard  -
-eno4            down     -          C4:34:6B:BA:79:6F    Hewlett Packard  -
-```
-
-## Running Without Installation
-
-You can run NetGrid directly from the source code without installing it:
-
+### Storage Issues
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/netgrid.git
-cd netgrid
+# Check PVC status
+kubectl get pvc -n privacy-stack
 
-# Install dependencies only
-pip install psutil netifaces requests rich click
+# Check storage classes
+kubectl get storageclass
 
-# Run directly
-python -m netgrid.cli.main
-# OR
-python src/netgrid/cli/main.py
+# Check Longhorn status
+kubectl get pods -n longhorn-system
 ```
 
-## Vendor Lookup and Caching
-
-NetGrid uses public OUI APIs to look up the vendor for each MAC address. Results are cached locally in `~/.netgrid/cache` for performance and offline use.
-
-### Vendor Lookup Behavior
-
-- **First run**: Fetches vendor information from internet APIs
-- **Subsequent runs**: Uses cached data for known MAC addresses
-- **Cache location**: `~/.netgrid/cache/vendors.json`
-- **Offline mode**: Works with cached data when internet is unavailable
-
-### Performance Options
-
+### Network Issues
 ```bash
-# Skip vendor lookup for faster execution
-netgrid --no-vendors
+# Check services
+kubectl get services -n privacy-stack
 
-# Clear vendor cache (force refresh)
-rm -rf ~/.netgrid/cache
+# Check ingress
+kubectl get ingress -n privacy-stack
+
+# Test service connectivity
+kubectl exec -it <pod-name> -n privacy-stack -- curl <service-url>
 ```
 
-## Troubleshooting
+## 📊 Monitoring
 
-### Common Issues
-
-#### 1. "netgrid: command not found"
-
-**Problem**: The `netgrid` command is not in your PATH.
-
-**Solutions**:
+### Resource Usage
 ```bash
-# Option A: Activate the virtual environment
-source venv/bin/activate
-netgrid
-
-# Option B: Run directly from source
-python -m netgrid.cli.main
-
-# Option C: Check if installed correctly
-pip list | grep netgrid
+# Check resource usage
+kubectl top pods -n privacy-stack
+kubectl top nodes
 ```
 
-#### 2. "Permission denied" or "No interfaces found"
-
-**Problem**: Insufficient privileges to read system network information.
-
-**Solutions**:
+### Longhorn Dashboard
+Access Longhorn dashboard to monitor storage:
 ```bash
-# Run with sudo (if needed)
-sudo netgrid
-
-# Or run with user privileges (limited info)
-netgrid --no-vendors
+kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80
 ```
+Then visit: http://localhost:8080
 
-#### 3. "Module not found" errors
+## 🔄 Updates
 
-**Problem**: Missing dependencies.
-
-**Solutions**:
+### Update Services
 ```bash
-# Reinstall dependencies
-pip install -r requirements.txt
+# Update specific service
+kubectl rollout restart deployment/<service-name> -n privacy-stack
 
-# Or install specific missing package
-pip install psutil netifaces requests rich click
+# Check rollout status
+kubectl rollout status deployment/<service-name> -n privacy-stack
 ```
 
-#### 4. Vendor lookup fails
+### Backup Strategy
+1. **Database Backups**: Use service-specific backup tools
+2. **Configuration Backups**: Export Kubernetes manifests
+3. **Data Backups**: Use Longhorn snapshots and NFS backups
 
-**Problem**: Network issues or API rate limiting.
+## 🛡️ Security Considerations
 
-**Solutions**:
-```bash
-# Run without vendor lookup
-netgrid --no-vendors
+1. **Change Default Credentials**: Update all default passwords and secrets
+2. **Network Security**: Configure firewall rules and network policies
+3. **SSL/TLS**: Enable HTTPS for all services in production
+4. **Updates**: Regularly update container images and dependencies
+5. **Access Control**: Implement proper RBAC and network policies
+6. **Monitoring**: Set up logging and monitoring for security events
 
-# Check internet connectivity
-ping google.com
+## 📝 Customization
 
-# Clear cache and retry
-rm -rf ~/.netgrid/cache
-netgrid
-```
+### Environment Variables
+Each service can be customized by modifying environment variables in the deployment manifests.
 
-#### 5. "No network interfaces found"
+### Resource Allocation
+Adjust CPU and memory requests/limits based on your usage patterns.
 
-**Problem**: All interfaces are being filtered out.
+### Storage Sizes
+Modify PVC sizes based on your data requirements.
 
-**Possible causes**:
-- System only has virtual interfaces (Docker, VMs)
-- Running in a container with limited network access
-- Network interfaces have unusual naming
+## 🤝 Contributing
 
-**Check what interfaces exist**:
-```bash
-# Check system interfaces
-ip link show
-# Or
-ifconfig -a
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-# Run with verbose output (if available)
-python -c "from netgrid.core.interface_collector import InterfaceCollector; print([i.name for i in InterfaceCollector().get_all_interfaces()])"
-```
+## 📄 License
 
-### System Compatibility
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-NetGrid is tested on:
-- ✅ Ubuntu 18.04, 20.04, 22.04
-- ✅ CentOS 7, 8
-- ✅ Amazon Linux 2
-- ✅ Debian 10, 11
-- ⚠️ Alpine Linux (limited testing)
-- ❌ Windows (not supported)
-- ❌ macOS (not tested)
+## 🙏 Acknowledgments
 
-## Development
+- XDA Developers for the original article inspiration
+- All the open-source projects that make this stack possible
+- The Kubernetes and K3s communities
 
-### Development Setup
+## 📞 Support
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/netgrid.git
-cd netgrid
+For issues and questions:
+1. Check the troubleshooting section
+2. Review service-specific documentation
+3. Open an issue in the repository
+4. Join community discussions
 
-# Create development environment
-python3 -m venv venv
-source venv/bin/activate
+---
 
-# Install with development dependencies
-pip install uv
-uv pip install -e .[dev]
-
-# Verify installation
-netgrid --help
-```
-
-### Running During Development
-
-```bash
-# Activate virtual environment
-source venv/bin/activate
-
-# Run the tool
-netgrid
-
-# Or run directly from source (without installation)
-python -m netgrid.cli.main
-
-# Or run the main module directly
-python src/netgrid/cli/main.py
-```
-
-### Development Commands
-
-```bash
-# Run tests
-python -m pytest
-
-# Run tests with coverage
-python -m pytest --cov=src
-
-# Format code
-black src/ tests/
-
-# Lint code
-flake8 src/ tests/
-
-# Type checking
-mypy src/
-
-# Run specific test
-python -m pytest tests/core/test_interface_collector.py -v
-```
-
-### Project Structure
-
-```
-netgrid/
-├── src/netgrid/           # Source code
-│   ├── core/              # Core business logic
-│   │   ├── data_models.py           # Data structures and models
-│   │   ├── interface_collector.py   # System interface discovery
-│   │   └── vendor_lookup.py         # Vendor lookup and caching
-│   ├── display/           # Output formatting
-│   │   ├── table_formatter.py       # Table formatting and styling
-│   │   └── color_manager.py         # Color schemes and themes
-│   ├── utils/             # Utility functions
-│   │   └── cache_manager.py         # Local cache management
-│   └── cli/               # Command line interface
-│       └── main.py        # CLI entry point
-├── docs/                  # Documentation
-├── tests/                 # Test suite
-├── plans/                 # Project planning documents
-└── requirements.txt       # Python dependencies
-```
-
-## Documentation
-
-- [Installation Guide](docs/user_guide/installation.md)
-- [Usage Guide](docs/user_guide/usage.md)
-- [Configuration](docs/user_guide/configuration.md)
-- [Examples](docs/user_guide/examples.md)
-- [Troubleshooting](docs/user_guide/troubleshooting.md)
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](docs/developer/contributing.md) for details.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Roadmap
-
-### Phase 1: Basic Command Line Tool ✅ (Complete)
-- [x] Project planning and structure setup
-- [x] Network interface discovery and data collection
-- [x] Real-time system queries (no text files)
-- [x] Basic CLI interface with filtering
-- [x] Speed information display
-- [x] Vendor lookup system with caching
-- [x] Enhanced table formatting with colors
-- [x] Additional CLI options and filtering
-
-### Phase 2: Real-time Updates (Future)
-- [ ] Ncurses interface
-- [ ] Real-time monitoring
-- [ ] Interactive controls
-- [ ] Performance metrics
-
-## Current Status
-
-**Phase 1 - Complete** ✅
-- ✅ Basic CLI tool is functional and displays real-time interface information
-- ✅ System interface discovery and data collection working
-- ✅ Speed information included in table output
-- ✅ Interface filtering implemented (excludes veth, br-, lo, tailscale, vmsgohere)
-- ✅ Vendor lookup and caching implemented
-- ✅ Enhanced table formatting and color options
-- ✅ CLI summary and color scheme options
-- ✅ Comprehensive test suite in place
-- ✅ Project structure and documentation established
-
-**Next Priority**: Begin Phase 2 (real-time updates)
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/netgrid/issues)
-- **Documentation**: [Project Docs](docs/)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/netgrid/discussions)
-
-## Acknowledgments
-
-- Built with [Rich](https://github.com/Textualize/rich) for beautiful terminal output
-- Uses [psutil](https://github.com/giampaolo/psutil) for system information
-- Uses [macvendors.com](https://macvendors.com/) and [macvendors.co](https://macvendors.co/) for OUI lookups
-- Inspired by network monitoring tools like `ip`, `ifconfig`, and `netstat` 
+**Happy self-hosting! 🎉**

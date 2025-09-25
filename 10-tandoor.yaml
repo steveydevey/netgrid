@@ -1,0 +1,192 @@
+---
+# Tandoor PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tandoor-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+
+---
+# Tandoor Database PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tandoor-db-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+
+---
+# Tandoor Database Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tandoor-db
+  namespace: privacy-stack
+  labels:
+    app: tandoor-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tandoor-db
+  template:
+    metadata:
+      labels:
+        app: tandoor-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: "tandoor"
+        - name: POSTGRES_USER
+          value: "tandoor"
+        - name: POSTGRES_PASSWORD
+          value: "changeme123"  # Change this password!
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        volumeMounts:
+        - name: tandoor-db-storage
+          mountPath: "/var/lib/postgresql/data"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: tandoor-db-storage
+        persistentVolumeClaim:
+          claimName: tandoor-db-pvc
+
+---
+# Tandoor Database Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tandoor-db
+  namespace: privacy-stack
+  labels:
+    app: tandoor-db
+spec:
+  selector:
+    app: tandoor-db
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Tandoor Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tandoor
+  namespace: privacy-stack
+  labels:
+    app: tandoor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tandoor
+  template:
+    metadata:
+      labels:
+        app: tandoor
+    spec:
+      containers:
+      - name: tandoor
+        image: vabene1111/recipes:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        # Database configuration
+        - name: POSTGRES_DB
+          value: "tandoor"
+        - name: POSTGRES_USER
+          value: "tandoor"
+        - name: POSTGRES_PASSWORD
+          value: "changeme123"
+        - name: POSTGRES_HOST
+          value: "tandoor-db"
+        - name: POSTGRES_PORT
+          value: "5432"
+        
+        # Application settings
+        - name: SECRET_KEY
+          value: "changeme123456789012345678901234567890123456789012345678901234567890"  # Change this secret key!
+        - name: DEBUG
+          value: "False"
+        - name: TIMEZONE
+          value: "UTC"
+        
+        # Media settings
+        - name: MEDIA_ROOT
+          value: "/app/mediafiles"
+        - name: STATIC_ROOT
+          value: "/app/staticfiles"
+        
+        # Security settings
+        - name: ALLOWED_HOSTS
+          value: "*"
+        - name: CSRF_TRUSTED_ORIGINS
+          value: "http://localhost:8080,https://tandoor.local"
+        
+        volumeMounts:
+        - name: tandoor-storage
+          mountPath: "/app/mediafiles"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: tandoor-storage
+        persistentVolumeClaim:
+          claimName: tandoor-pvc
+
+---
+# Tandoor Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tandoor
+  namespace: privacy-stack
+  labels:
+    app: tandoor
+spec:
+  selector:
+    app: tandoor
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP

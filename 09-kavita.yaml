@@ -1,0 +1,95 @@
+---
+# Kavita PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kavita-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: longhorn
+
+---
+# Kavita Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kavita
+  namespace: privacy-stack
+  labels:
+    app: kavita
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kavita
+  template:
+    metadata:
+      labels:
+        app: kavita
+    spec:
+      containers:
+      - name: kavita
+        image: kizaing/kavita:latest
+        ports:
+        - containerPort: 5000
+          name: http
+        env:
+        # Application settings
+        - name: DOTNET_SYSTEM_GLOBALIZATION_INVARIANT
+          value: "1"
+        - name: TZ
+          value: "UTC"
+        
+        # Storage paths
+        - name: Kavita__TokenKey
+          value: "changeme123456789012345678901234567890123456789012345678901234567890"  # Change this token key!
+        
+        volumeMounts:
+        - name: kavita-storage
+          mountPath: "/kavita"
+        - name: kavita-config
+          mountPath: "/kavita/config"
+        - name: kavita-data
+          mountPath: "/kavita/data"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: kavita-storage
+        persistentVolumeClaim:
+          claimName: kavita-pvc
+      - name: kavita-config
+        emptyDir: {}
+      - name: kavita-data
+        emptyDir: {}
+
+---
+# Kavita Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: kavita
+  namespace: privacy-stack
+  labels:
+    app: kavita
+spec:
+  selector:
+    app: kavita
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+    protocol: TCP
+  type: ClusterIP

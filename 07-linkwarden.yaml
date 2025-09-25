@@ -1,0 +1,186 @@
+---
+# Linkwarden PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: linkwarden-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+
+---
+# Linkwarden Database PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: linkwarden-db-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: longhorn
+
+---
+# Linkwarden Database Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwarden-db
+  namespace: privacy-stack
+  labels:
+    app: linkwarden-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linkwarden-db
+  template:
+    metadata:
+      labels:
+        app: linkwarden-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: "linkwarden"
+        - name: POSTGRES_USER
+          value: "linkwarden"
+        - name: POSTGRES_PASSWORD
+          value: "changeme123"  # Change this password!
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        volumeMounts:
+        - name: linkwarden-db-storage
+          mountPath: "/var/lib/postgresql/data"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: linkwarden-db-storage
+        persistentVolumeClaim:
+          claimName: linkwarden-db-pvc
+
+---
+# Linkwarden Database Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: linkwarden-db
+  namespace: privacy-stack
+  labels:
+    app: linkwarden-db
+spec:
+  selector:
+    app: linkwarden-db
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Linkwarden Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwarden
+  namespace: privacy-stack
+  labels:
+    app: linkwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linkwarden
+  template:
+    metadata:
+      labels:
+        app: linkwarden
+    spec:
+      containers:
+      - name: linkwarden
+        image: linkwarden/linkwarden:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        # Database configuration
+        - name: DATABASE_URL
+          value: "postgresql://linkwarden:changeme123@linkwarden-db:5432/linkwarden"
+        
+        # Application settings
+        - name: NEXTAUTH_URL
+          value: "http://localhost:3000"
+        - name: NEXTAUTH_SECRET
+          value: "changeme123456789012345678901234567890"  # Change this secret!
+        
+        # Storage configuration
+        - name: UPLOADS_DIR
+          value: "/data/uploads"
+        
+        # Optional: Email configuration
+        - name: EMAIL_FROM
+          value: ""
+        - name: EMAIL_SERVER_HOST
+          value: ""
+        - name: EMAIL_SERVER_PORT
+          value: "587"
+        - name: EMAIL_SERVER_USER
+          value: ""
+        - name: EMAIL_SERVER_PASSWORD
+          value: ""
+        
+        volumeMounts:
+        - name: linkwarden-storage
+          mountPath: "/data"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: linkwarden-storage
+        persistentVolumeClaim:
+          claimName: linkwarden-pvc
+
+---
+# Linkwarden Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: linkwarden
+  namespace: privacy-stack
+  labels:
+    app: linkwarden
+spec:
+  selector:
+    app: linkwarden
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
