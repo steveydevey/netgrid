@@ -1,0 +1,93 @@
+---
+# Tududi PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tududi-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: longhorn
+
+---
+# Tududi Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tududi
+  namespace: privacy-stack
+  labels:
+    app: tududi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tududi
+  template:
+    metadata:
+      labels:
+        app: tududi
+    spec:
+      containers:
+      - name: tududi
+        image: tududi/tududi:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        # Database configuration
+        - name: DATABASE_URL
+          value: "sqlite:///app/data/tududi.db"
+        
+        # Application settings
+        - name: RUST_LOG
+          value: "info"
+        - name: ROCKET_ADDRESS
+          value: "0.0.0.0"
+        - name: ROCKET_PORT
+          value: "8080"
+        
+        # Security settings
+        - name: ROCKET_SECRET_KEY
+          value: "changeme123456789012345678901234567890123456789012345678901234567890"  # Change this secret key!
+        
+        volumeMounts:
+        - name: tududi-storage
+          mountPath: "/app/data"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: tududi-storage
+        persistentVolumeClaim:
+          claimName: tududi-pvc
+
+---
+# Tududi Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tududi
+  namespace: privacy-stack
+  labels:
+    app: tududi
+spec:
+  selector:
+    app: tududi
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP

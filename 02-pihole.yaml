@@ -1,0 +1,128 @@
+---
+# Pi-hole PersistentVolumeClaim for configuration data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pihole-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: longhorn
+
+---
+# Pi-hole PersistentVolumeClaim for dnsmasq configuration
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pihole-dnsmasq-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: longhorn
+
+---
+# Pi-hole Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole
+  namespace: privacy-stack
+  labels:
+    app: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      containers:
+      - name: pihole
+        image: pihole/pihole:2024.04.2
+        ports:
+        - containerPort: 80
+          name: http
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        - containerPort: 53
+          name: dns-udp
+          protocol: UDP
+        env:
+        - name: TZ
+          value: "UTC"
+        - name: WEBPASSWORD
+          value: "changeme123"  # Change this password!
+        - name: DNS1
+          value: "1.1.1.1"
+        - name: DNS2
+          value: "1.0.0.1"
+        - name: PIHOLE_DNS_
+          value: "1.1.1.1;1.0.0.1"
+        - name: VIRTUAL_HOST
+          value: "pihole.local"
+        - name: PIHOLE_INTERFACE
+          value: "eth0"
+        - name: FTLCONF_LOCAL_IPV4
+          value: "127.0.0.1"
+        volumeMounts:
+        - name: pihole-storage
+          mountPath: "/etc/pihole"
+        - name: dnsmasq-storage
+          mountPath: "/etc/dnsmasq.d"
+        - name: pihole-logs
+          mountPath: "/var/log"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: pihole-storage
+        persistentVolumeClaim:
+          claimName: pihole-pvc
+      - name: dnsmasq-storage
+        persistentVolumeClaim:
+          claimName: pihole-dnsmasq-pvc
+      - name: pihole-logs
+        emptyDir: {}
+
+---
+# Pi-hole Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole
+  namespace: privacy-stack
+  labels:
+    app: pihole
+spec:
+  selector:
+    app: pihole
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: dns-tcp
+    port: 53
+    targetPort: 53
+    protocol: TCP
+  - name: dns-udp
+    port: 53
+    targetPort: 53
+    protocol: UDP
+  type: ClusterIP

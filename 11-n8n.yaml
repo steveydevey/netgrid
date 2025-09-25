@@ -1,0 +1,109 @@
+---
+# n8n PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: n8n-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+
+---
+# n8n Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: privacy-stack
+  labels:
+    app: n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      containers:
+      - name: n8n
+        image: n8nio/n8n:latest
+        ports:
+        - containerPort: 5678
+          name: http
+        env:
+        # Application settings
+        - name: N8N_BASIC_AUTH_ACTIVE
+          value: "true"
+        - name: N8N_BASIC_AUTH_USER
+          value: "admin"
+        - name: N8N_BASIC_AUTH_PASSWORD
+          value: "changeme123"  # Change this password!
+        
+        # Database settings (using SQLite by default)
+        - name: DB_TYPE
+          value: "sqlite"
+        - name: DB_SQLITE_DATABASE
+          value: "/home/node/.n8n/database.sqlite"
+        
+        # Security settings
+        - name: N8N_SECURE_COOKIE
+          value: "false"
+        - name: WEBHOOK_URL
+          value: "http://localhost:5678/"
+        - name: GENERIC_TIMEZONE
+          value: "UTC"
+        
+        # Performance settings
+        - name: N8N_LOG_LEVEL
+          value: "info"
+        - name: N8N_LOG_OUTPUT
+          value: "console"
+        
+        # Encryption settings
+        - name: N8N_ENCRYPTION_KEY
+          value: "changeme123456789012345678901234567890123456789012345678901234567890"  # Change this encryption key!
+        
+        volumeMounts:
+        - name: n8n-storage
+          mountPath: "/home/node/.n8n"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: n8n-storage
+        persistentVolumeClaim:
+          claimName: n8n-pvc
+
+---
+# n8n Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  namespace: privacy-stack
+  labels:
+    app: n8n
+spec:
+  selector:
+    app: n8n
+  ports:
+  - name: http
+    port: 5678
+    targetPort: 5678
+    protocol: TCP
+  type: ClusterIP
