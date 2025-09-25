@@ -1,0 +1,128 @@
+---
+# Vaultwarden PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vaultwarden-pvc
+  namespace: privacy-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+
+---
+# Vaultwarden Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  namespace: privacy-stack
+  labels:
+    app: vaultwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      containers:
+      - name: vaultwarden
+        image: vaultwarden/server:1.30.6-alpine
+        ports:
+        - containerPort: 80
+          name: http
+        - containerPort: 3012
+          name: websocket
+        env:
+        # Database configuration
+        - name: DATABASE_URL
+          value: "/data/db.sqlite3"
+        
+        # Security settings
+        - name: ROCKET_TLS
+          value: "{certs=\"/ssl/cert.pem\",key=\"/ssl/key.pem\"}"
+        
+        # Admin settings
+        - name: ADMIN_TOKEN
+          value: "changeme123"  # Change this admin token!
+        
+        # WebSocket settings
+        - name: WEBSOCKET_ENABLED
+          value: "true"
+        
+        # Email settings (optional - configure if you want email notifications)
+        - name: SMTP_HOST
+          value: ""
+        - name: SMTP_FROM
+          value: ""
+        - name: SMTP_PORT
+          value: "587"
+        - name: SMTP_SECURITY
+          value: "starttls"
+        - name: SMTP_USERNAME
+          value: ""
+        - name: SMTP_PASSWORD
+          value: ""
+        
+        # Signup settings
+        - name: SIGNUPS_ALLOWED
+          value: "true"
+        
+        # Security headers
+        - name: ROCKET_ADDRESS
+          value: "0.0.0.0"
+        - name: ROCKET_PORT
+          value: "80"
+        
+        volumeMounts:
+        - name: vaultwarden-storage
+          mountPath: "/data"
+        - name: vaultwarden-ssl
+          mountPath: "/ssl"
+          readOnly: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: vaultwarden-storage
+        persistentVolumeClaim:
+          claimName: vaultwarden-pvc
+      - name: vaultwarden-ssl
+        emptyDir: {}  # Mount your SSL certificates here if needed
+
+---
+# Vaultwarden Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: vaultwarden
+  namespace: privacy-stack
+  labels:
+    app: vaultwarden
+spec:
+  selector:
+    app: vaultwarden
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: websocket
+    port: 3012
+    targetPort: 3012
+    protocol: TCP
+  type: ClusterIP
